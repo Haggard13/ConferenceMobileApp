@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">Конференция</string>
+    <string name="conferences">Конференции</string>
+    <string name="dialogues">Диалоги</string>
+    <string name="profile">Профиль</string>
+    <string name="developers">eh13</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="inputBtnText">Войти</string>
+    <string name="hintPasswordET">Пароль</string>
+    <string name="hintEmailET">E-Mail</string>
+    <string name="RegistrationBtnText">Зарегистрироваться</string>
+    <string name="signInText">Вход</string>
+    <string name="inputPassword">Введите пароль</string>
+    <string name="repeatPassword">Повторите пароль</string>
+    <string name="enterEmail">Введите почту</string>
+    <string name="registrationText">Регистрация</string>
+    <string name="exit">ВЫЙТИ</string>
+    <string name="add_conference">Добавить конфренцию</string>
+    <string name="add_dialogue">Добавить диалог</string>
+    <string name="chat">Чат</string>
+    <string name="members">Участники</string>
+    <string name="room_meet">Комната</string>
+    <string name="avatar">Аватар</string>
+    <string name="conference_name">Название</string>
+    <string name="input_message">Введите сообщение...</string>
+    <string name="attach">Прикрепить</string>
+    <string name="send">Отправить</string>
+    <string name="settings">Настройки</string>
+</resources>

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "284398075404",
+    "firebase_url": "https://conferencealphaproject.firebaseio.com",
+    "project_id": "conferencealphaproject",
+    "storage_bucket": "conferencealphaproject.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:284398075404:android:a99649ff7058488079b829",
+        "android_client_info": {
+          "package_name": "com.example.conference"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "284398075404-9ci10ct2798377obn8tj7b7bfr5mv54u.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJnlTPskQ1KMTC67b8MEPUk_jQLnUVRbU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "284398075404-9ci10ct2798377obn8tj7b7bfr5mv54u.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

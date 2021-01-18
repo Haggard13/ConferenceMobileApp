@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:background="@color/colorBackground"
+    tools:context=".activity.MeetActivity">
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="0dp"
+        android:layout_height="40dp"
+        android:background="@color/colorPrimary"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="6">
+
+            <ImageButton
+                android:id="@+id/membersIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:onClick="onBroadcastClick"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/members_meet" />
+
+            <ImageButton
+                android:id="@+id/roomIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/room_meet" />
+
+            <ImageButton
+                android:id="@+id/chatIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/chat_meet" />
+
+            <ImageButton
+                android:id="@+id/shareScreenIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/share_screen_meet" />
+
+            <ImageButton
+                android:id="@+id/videoBroadcastIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/video_broadcast_meet" />
+
+            <ImageButton
+                android:id="@+id/microIB"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_bottom_navigation_view_background"
+                android:padding="7dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/micro_meet" />
+
+        </LinearLayout>
+
+    </com.google.android.material.bottomnavigation.BottomNavigationView>
+
+    <VideoView
+        android:id="@+id/broadcastVW"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <fragment
+        android:id="@+id/fragment"
+        android:name="com.example.conference.fragment.MeetMembersFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp" />
+
+    <fragment
+        android:id="@+id/fragment2"
+        android:name="com.example.conference.fragment.MeetChatFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="38dp" />
+
+    <fragment
+        android:id="@+id/fragment3"
+        android:name="com.example.conference.fragment.MeetRoomFragment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="19dp" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
