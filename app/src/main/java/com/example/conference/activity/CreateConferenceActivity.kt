@@ -8,23 +8,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
-import com.example.conference.adapter.CreateConferenceRecyclerViewAdapter
-import com.example.conference.db.ConferenceRoomDatabase
 import com.example.conference.exception.CreateConferenceException
 import com.example.conference.exception.CreateDialogueException
 import com.example.conference.json.Conference
 import com.example.conference.json.ConferenceMember
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.CreateConferenceViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_create_conference.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.ConnectionSpec
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.URLEncoder
@@ -81,7 +74,7 @@ class  CreateConferenceActivity : AppCompatActivity() {
                 count = vm.conferenceMembers.size + 1
             ))
             try {
-                val r = Http.get(
+                val r = Server.get(
                     String.format(
                         "/conference/createNewConference/?conference_info=%s",
                         URLEncoder.encode(json, "UTF-8")

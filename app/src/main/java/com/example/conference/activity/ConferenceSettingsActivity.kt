@@ -5,22 +5,18 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Switch
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
 import com.example.conference.adapter.ConferenceSettingsRecyclerViewAdapter
-import com.example.conference.db.entity.ConferenceEntity
-import com.example.conference.db.entity.ContactEntity
 import com.example.conference.exception.*
 import com.example.conference.json.ConferenceMembersList
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ConferenceSettingsViewModel
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso
@@ -57,7 +53,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
         addConferenceMemberIB.setOnClickListener(this::onAddUserClick)
         GlobalScope.launch {
             try {
-                val r = Http.get("/conference/${vm.conferenceID}/members")
+                val r = Server.get("/conference/${vm.conferenceID}/members")
                 if (!r.isSuccessful)
                     throw LoadConferenceMembersException()
                 val json = r.body!!.string()
@@ -76,7 +72,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
         }
 
         Picasso.get()
-            .load("${Http.baseURL}/conference/avatar/download/?id=${vm.conferenceID}")
+            .load("${Server.baseURL}/conference/avatar/download/?id=${vm.conferenceID}")
             .placeholder(R.drawable.placeholder)
             .error(R.drawable.placeholder)
             .fit()
@@ -94,14 +90,14 @@ class ConferenceSettingsActivity : AppCompatActivity() {
                     val imageUri = data?.data ?: throw LoadImageException()
                     val fileStream = contentResolver.openInputStream(imageUri)
                     val allBytes = fileStream!!.readBytes()
-                    val result = Http.sendNewConferenceAvatar(vm.conferenceID, allBytes)
+                    val result = Server.sendNewConferenceAvatar(vm.conferenceID, allBytes)
 
                     if (result == -1)
                         throw LoadImageException()
                     withContext(Main) {
                         Picasso.get()
                             .load(
-                                Http.baseURL
+                                Server.baseURL
                                         + "/conference/avatar/download/?id="
                                         + vm.conferenceID
                             )
@@ -125,7 +121,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
         } else if (requestCode == ADD_USER && resultCode == RESULT_OK) {
             GlobalScope.launch {
                 try {
-                    val r = Http.get("/conference" +
+                    val r = Server.get("/conference" +
                             "/${vm.conferenceID}" +
                             "/addUser" +
                             "/${data!!.getIntExtra("user_id", 0)}" +
@@ -183,7 +179,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
                         withContext(Main) {
                             newName = conferenceName.text.toString()
                         }
-                        val response = Http.get(
+                        val response = Server.get(
                             "/conference/rename/?id=${vm.conferenceID}&" +
                                     "new_name=${URLEncoder.encode(newName, "UTF-8")}")
                         if (!response.isSuccessful)
@@ -223,7 +219,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
             .setPositiveButton("Да") { _, _ ->
                 GlobalScope.launch {
                     try {
-                        val r = Http.get("/conference" +
+                        val r = Server.get("/conference" +
                                 "/${vm.conferenceID}" +
                                 "/deleteUser" +
                                 "/${m.email.hashCode()}" +

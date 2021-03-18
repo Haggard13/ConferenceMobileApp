@@ -6,10 +6,9 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.conference.OpinionCard
-import com.example.conference.OpinionCards
+import com.example.conference.json.OpinionCards
 import com.example.conference.R
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.opinion_item_view.view.*
 
@@ -29,7 +28,7 @@ class ResultCardRecyclerViewAdapter(
         val avatar: ImageView = itemView.opinionAvatarIV
         val name: TextView = itemView.userNameOpinionTV
         fun bind(position: Int) {
-            Picasso.get().load("${Http.baseURL}/user/avatar/download/?id=${opinionList.list[position].user_id}")
+            Picasso.get().load("${Server.baseURL}/user/avatar/download/?id=${opinionList.list[position].user_id}")
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()

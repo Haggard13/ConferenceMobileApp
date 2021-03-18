@@ -4,6 +4,7 @@
       <w>confs</w>
       <w>jdbc</w>
       <w>jtds</w>
+      <w>kurento</w>
       <w>postgresql</w>
       <w>sqlserver</w>
     </words>

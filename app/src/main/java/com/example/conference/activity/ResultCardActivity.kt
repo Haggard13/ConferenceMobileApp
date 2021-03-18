@@ -6,21 +6,15 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.conference.Opinion
-import com.example.conference.OpinionCards
+import com.example.conference.json.OpinionCards
 import com.example.conference.R
-import com.example.conference.ResultCards
 import com.example.conference.adapter.ResultCardRecyclerViewAdapter
-import com.example.conference.adapter.ResultCardsRecyclerViewAdapter
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ResultCardViewModel
-import com.example.conference.vm.ResultCardsViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_result_card.*
 import kotlinx.android.synthetic.main.activity_result_cards.*
-import kotlinx.android.synthetic.main.activity_result_cards.resultCardsRV
 import kotlinx.android.synthetic.main.item_view_result_card.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -42,7 +36,7 @@ class ResultCardActivity : AppCompatActivity() {
         GlobalScope.launch {
             try {
                 val opinionCards = Gson().fromJson(
-                    Http.get(
+                    Server.get(
                         "/opinions/getOpinions/?result_id=" +
                                 "${intent.getIntExtra("result_id", 0)}"//fixme
                     ).body!!.string(), OpinionCards::class.java
@@ -94,7 +88,7 @@ class ResultCardActivity : AppCompatActivity() {
         GlobalScope.launch {
             try {
                 val opinionCards = Gson().fromJson(
-                    Http.get(
+                    Server.get(
                         "/opinions/getOpinions/?result_id=" +
                                 "${intent.getIntExtra("result_id", 0)}"//fixme
                     ).body!!.string(), OpinionCards::class.java

@@ -6,7 +6,7 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import com.example.conference.R
 import com.example.conference.exception.AddOpinionException
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import kotlinx.android.synthetic.main.activity_add_opinion.*
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope
@@ -30,7 +30,7 @@ class AddOpinionActivity : AppCompatActivity() {
             }
             GlobalScope.launch {
                 try {
-                    val r = Http.get(
+                    val r = Server.get(
                         "/opinions" +
                                 "/addOpinion" +
                                 "/?user_id=${

@@ -1,6 +1,5 @@
 package com.example.conference.adapter
 
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,10 +8,9 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.entity.ContactEntity
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.contact_item_view.view.*
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 
 class ContactsRecyclerViewAdapter(
@@ -39,7 +37,7 @@ class ContactsRecyclerViewAdapter(
         var email: TextView = itemView.contactEmailTV
         fun bind(c: ContactEntity) {
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + c.email.hashCode())
+                .load(Server.baseURL + "/user/avatar/download/?id=" + c.email.hashCode())
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()

@@ -7,7 +7,7 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import com.example.conference.R
 import com.example.conference.exception.AddResultException
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import kotlinx.android.synthetic.main.activity_add_result.*
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope
@@ -36,7 +36,7 @@ class AddResultActivity : AppCompatActivity() {
                 return@launch
             }
             try {
-                val response = Http.get(
+                val response = Server.get(
                     "/results" +
                             "/addResult" +
                             "/?conference_id=$conferenceID" +

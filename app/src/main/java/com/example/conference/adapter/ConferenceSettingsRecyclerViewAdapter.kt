@@ -5,9 +5,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
-import com.example.conference.db.entity.ContactEntity
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.contact_item_view.view.*
 
@@ -32,7 +31,7 @@ class ConferenceSettingsRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso
                 .get()
-                .load("${Http.baseURL}/user/avatar/download/?id=${conferenceMembers[p].email.hashCode()}")
+                .load("${Server.baseURL}/user/avatar/download/?id=${conferenceMembers[p].email.hashCode()}")
                 .centerCrop()
                 .fit()
                 .placeholder(R.drawable.placeholder)

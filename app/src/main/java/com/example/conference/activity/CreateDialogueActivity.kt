@@ -9,19 +9,13 @@ import com.example.conference.R
 import com.example.conference.adapter.CreateDialogueRecyclerViewAdapter
 import com.example.conference.db.ConferenceRoomDatabase
 import com.example.conference.exception.CreateDialogueException
-import com.example.conference.json.Conference
 import com.example.conference.json.Dialogue
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.CreateDialogueViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_create_dialogue.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.ConnectionSpec
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.net.URLEncoder
@@ -61,7 +55,7 @@ class CreateDialogueActivity : AppCompatActivity() {
                         first_user_surname = vm.getUserSurname()!!,
                         second_user_surname = surname))
             try {
-                val r = Http.get(
+                val r = Server.get(
                     String.format(
                         "/dialogue/createNewDialogue/?dialogue_info=%s",
                         URLEncoder.encode(json, "UTF-8")

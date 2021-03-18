@@ -25,7 +25,7 @@
                 app:cardCornerRadius="100dp">
 
                 <ImageView
-                    android:id="@+id/AMmemberAvatarIV"
+                    android:id="@+id/memberAvatarIV"
                     android:layout_width="50dp"
                     android:layout_height="50dp"
                     tools:srcCompat="@tools:sample/avatars" />
@@ -37,7 +37,7 @@
                 android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/AMmemberName"
+                    android:id="@+id/memberName"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="5dp"
@@ -51,30 +51,35 @@
 
                 <LinearLayout
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="5dp"
+                    android:layout_height="match_parent"
                     android:orientation="horizontal">
 
-                    <ImageButton
-                        android:id="@+id/AMmemberPlayIB"
-                        android:layout_width="30dp"
-                        android:layout_height="30dp"
-                        android:background="#FFFFFF"
-                        android:padding="5dp"
-                        android:scaleType="fitXY"
-                        app:srcCompat="@drawable/play" />
+                    <ImageView
+                        android:id="@+id/imageView"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:layout_marginLeft="5dp"
+                        android:layout_marginTop="7dp"
+                        android:layout_marginBottom="7dp"
+                        android:layout_weight="1"
+                        app:srcCompat="@drawable/file" />
 
-                    <SeekBar
-                        android:id="@+id/AMmemberProgressAudioSB"
-                        style="@style/Widget.AppCompat.SeekBar"
-                        android:layout_width="200dp"
-                        android:layout_height="match_parent"
-                        android:clickable="false" />
-
+                    <TextView
+                        android:id="@+id/memberMessageFileNameTV"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_margin="7dp"
+                        android:ellipsize="middle"
+                        android:maxWidth="200dp"
+                        android:singleLine="true"
+                        android:text="TextView"
+                        android:textColor="@color/colorText"
+                        android:textSize="16sp"
+                        tools:text="filewithverylongnameitisbecauseitisverylongfile.txt" />
                 </LinearLayout>
 
                 <TextView
-                    android:id="@+id/AMmemberMessageTimeTV"
+                    android:id="@+id/memberMessageTimeTV"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="5dp"

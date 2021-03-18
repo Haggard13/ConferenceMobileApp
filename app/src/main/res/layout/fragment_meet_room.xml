@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/colorBackground"
     android:orientation="vertical"
     tools:context=".fragment.MeetRoomFragment">
 
@@ -26,7 +27,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/imageButton5"
+            android:id="@+id/roomBackIB"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"

@@ -4,7 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import com.example.conference.R
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import kotlinx.android.synthetic.main.activity_photo_reviewer.*
 
 class PhotoReviewerActivity : AppCompatActivity() {
@@ -25,7 +25,7 @@ class PhotoReviewerActivity : AppCompatActivity() {
             isScrollbarFadingEnabled = true
             scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
             loadUrl(
-                "${Http.baseURL}/${if (isConference) "conference" else "dialogue"}/getPhotography/?id=$photoID")
+                "${Server.baseURL}/${if (isConference) "conference" else "dialogue"}/getPhotography/?id=$photoID")
         }
     }
 }

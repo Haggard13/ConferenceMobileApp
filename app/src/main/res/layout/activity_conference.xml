@@ -30,7 +30,7 @@
             android:textColor="@color/colorText"
             android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/resultsCardIB"
+            app:layout_constraintEnd_toStartOf="@+id/startConferenceIB"
             app:layout_constraintStart_toEndOf="@+id/confBackIB"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -40,6 +40,7 @@
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:elevation="2dp"
+            android:onClick="onBackClick"
             android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -51,6 +52,7 @@
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:elevation="2dp"
+            android:onClick="onSettingsConferenceClick"
             android:padding="7dp"
             android:scaleType="fitCenter"
             app:layout_constraintEnd_toEndOf="parent"
@@ -63,11 +65,25 @@
             android:layout_height="40dp"
             android:background="#FFFFFF"
             android:elevation="2dp"
+            android:onClick="onResultCardClick"
             android:padding="8dp"
             android:scaleType="fitXY"
             app:layout_constraintEnd_toStartOf="@+id/conferenceSettingsIB"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/cards" />
+
+        <ImageButton
+            android:id="@+id/startConferenceIB"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="#FFF"
+            android:elevation="2dp"
+            android:onClick="onStartConferenceClick"
+            android:padding="8dp"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toStartOf="@+id/resultsCardIB"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/video_broadcast_meet" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
@@ -100,6 +116,7 @@
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:contentDescription="@string/attach"
+            android:onClick="onAddFileClick"
             android:padding="10dp"
             android:scaleType="fitCenter"
             app:layout_constraintStart_toStartOf="parent"

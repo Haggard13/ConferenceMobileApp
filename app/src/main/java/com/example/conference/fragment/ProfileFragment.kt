@@ -11,12 +11,11 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.activity.AddContactActivity
 import com.example.conference.activity.LoginActivity
 import com.example.conference.exception.LoadImageException
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.picasso.Picasso
@@ -62,7 +61,7 @@ class ProfileFragment : Fragment() {
         avatar = v.findViewById(R.id.avatarIV)
         avatar.setOnLongClickListener(this::onChangeAvatarLongClick)
         Picasso.get()
-            .load(Http.baseURL + "/user/avatar/download/?id=" + vm.sp.getInt("user_id", 0))
+            .load(Server.baseURL + "/user/avatar/download/?id=" + vm.sp.getInt("user_id", 0))
             .placeholder(R.drawable.placeholder)
             .error(R.drawable.placeholder)
             .fit()
@@ -93,14 +92,14 @@ class ProfileFragment : Fragment() {
                     val imageUri = data?.data ?: throw LoadImageException()
                     val fileStream = activity!!.contentResolver.openInputStream(imageUri)
                     val allBytes = fileStream!!.readBytes()
-                    val result = Http.sendNewUserAvatar(vm.getUserID(), allBytes)
+                    val result = Server.sendNewUserAvatar(vm.getUserID(), allBytes)
 
                     if (result == -1)
                         throw LoadImageException()
                     withContext(Main) {
                         Picasso.get()
                             .load(
-                                Http.baseURL + "/user/avatar/download/?id=" + vm.sp.getInt(
+                                Server.baseURL + "/user/avatar/download/?id=" + vm.sp.getInt(
                                     "user_id",
                                     0
                                 )

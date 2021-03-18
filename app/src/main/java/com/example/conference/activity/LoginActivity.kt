@@ -3,24 +3,18 @@ package com.example.conference.activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.conference.R
 import com.example.conference.exception.LoginException
 import com.example.conference.json.UserInfo
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.LoginViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_login.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.ConnectionSpec
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.*
@@ -58,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
                     } else {
                         GlobalScope.launch {
                             try {
-                                val r = Http.get(String.format("/user/info/?id=%s", id))
+                                val r = Server.get(String.format("/user/info/?id=%s", id))
                                 if (!r.isSuccessful) throw LoginException()
                                 val info = Gson().fromJson(r.body?.string(), UserInfo::class.java)
                                 vm.saveUserInfo(info)

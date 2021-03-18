@@ -7,12 +7,10 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
-import com.example.conference.db.entity.CMessageMinimal
 import com.example.conference.db.entity.DMessageMinimal
 import com.example.conference.db.entity.DialogueEntity
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.activity_conference_settings.*
 import kotlinx.android.synthetic.main.group_message_item_view.view.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -39,7 +37,7 @@ class DialoguesRecyclerViewAdapter(
         var time: TextView = itemView.lastMessageTimeTV
         fun bind(position: Int) {
             Picasso.get()
-                .load("${Http.baseURL}/user/avatar/download/?id=${dialogues[position].second_user_id}")
+                .load("${Server.baseURL}/user/avatar/download/?id=${dialogues[position].second_user_id}")
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()

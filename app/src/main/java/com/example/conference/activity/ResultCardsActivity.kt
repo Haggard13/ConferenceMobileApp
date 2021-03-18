@@ -7,9 +7,9 @@ import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
-import com.example.conference.ResultCards
+import com.example.conference.json.ResultCards
 import com.example.conference.adapter.ResultCardsRecyclerViewAdapter
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ResultCardsViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_result_cards.*
@@ -32,7 +32,7 @@ class ResultCardsActivity : AppCompatActivity() {
         GlobalScope.launch {
             try {
                 val results = Gson().fromJson(
-                    Http.get(
+                    Server.get(
                         "/results/getResults/?conference_id=" +
                                 "${intent.getIntExtra("conference_id", 0)}"
                     ).body!!.string(), ResultCards::class.java
@@ -90,7 +90,7 @@ class ResultCardsActivity : AppCompatActivity() {
         GlobalScope.launch {
             try {
                 val results = Gson().fromJson(
-                    Http.get(
+                    Server.get(
                         "/results/getResults/?conference_id=" +
                                 "${intent.getIntExtra("conference_id", 0)}"
                     ).body!!.string(), ResultCards::class.java

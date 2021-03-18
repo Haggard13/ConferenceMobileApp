@@ -14,13 +14,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.data.SenderEnum
 import com.example.conference.db.entity.DMessageEntity
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.message_item_view.view.*
+import kotlinx.android.synthetic.main.message_item_view.view.memberAvatarIV
+import kotlinx.android.synthetic.main.message_item_view.view.memberMessageTimeTV
+import kotlinx.android.synthetic.main.message_item_view.view.memberName
 import kotlinx.android.synthetic.main.message_item_view_audio_message.view.*
+import kotlinx.android.synthetic.main.message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.message_item_view_with_photo.view.*
 import kotlinx.android.synthetic.main.your_message_item_view.view.*
+import kotlinx.android.synthetic.main.your_message_item_view.view.userAvatarIV
+import kotlinx.android.synthetic.main.your_message_item_view.view.userMessageTimeTV
 import kotlinx.android.synthetic.main.your_message_item_view_audio_message.view.*
+import kotlinx.android.synthetic.main.your_message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_photo.view.*
 import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
@@ -31,7 +38,8 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder as RVViewHolder
 class DialogueRecyclerViewAdapter(
     var messages: List<DMessageEntity>,
     val context: Context,
-    val callbackForPhoto: (Int) -> Unit
+    val callbackForPhoto: (Int) -> Unit,
+    val callbackForFile: (Int, String) -> Unit
 ) : RVAdapter<RVViewHolder>(){
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RVViewHolder {
         return when(viewType) {
@@ -65,6 +73,16 @@ class DialogueRecyclerViewAdapter(
                     .inflate(R.layout.message_item_view_audio_message, parent, false)
                 AMMessagesViewHolder(itemView)
             }
+            6 -> {
+                val itemView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.your_message_item_view_with_file, parent, false)
+                WFYourMessageViewHolder(itemView)
+            }
+            7 -> {
+                val itemView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.message_item_view_with_file, parent, false)
+                WFMessageViewHolder(itemView)
+            }
             else -> throw IllegalArgumentException()
         }
     }
@@ -89,6 +107,12 @@ class DialogueRecyclerViewAdapter(
             5 -> with(holder as DialogueRecyclerViewAdapter.AMMessagesViewHolder) {
                 bind(position)
             }
+            6 -> with(holder as DialogueRecyclerViewAdapter.WFYourMessageViewHolder) {
+                bind(position)
+            }
+            7 -> with(holder as DialogueRecyclerViewAdapter.WFMessageViewHolder) {
+                bind(position)
+            }
         }
     }
 
@@ -101,6 +125,7 @@ class DialogueRecyclerViewAdapter(
                     1 -> 0
                     2 -> 1
                     3 -> 2
+                    4 -> 6
                     else -> -1
                 }
 
@@ -109,6 +134,7 @@ class DialogueRecyclerViewAdapter(
                     1 -> 3
                     2 -> 4
                     3 -> 5
+                    4 -> 7
                     else -> -1
                 }
             else -> -1
@@ -122,7 +148,7 @@ class DialogueRecyclerViewAdapter(
 
         fun bind(p: Int) {
             Picasso.get()
-                .load("${Http.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
+                .load("${Server.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -144,7 +170,7 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -153,7 +179,7 @@ class DialogueRecyclerViewAdapter(
             //endregion
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
+                .load(Server.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
                 .placeholder(R.drawable.photo)
                 .error(R.drawable.photo)
                 .fit()
@@ -176,7 +202,7 @@ class DialogueRecyclerViewAdapter(
 
         fun bind(p: Int) {
             Picasso.get()
-                .load("${Http.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
+                .load("${Server.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -187,16 +213,16 @@ class DialogueRecyclerViewAdapter(
         }
     }
 
-    inner class WPYourMessagesViewHolder(itemView: View,
-                                         var avatar: ImageView = itemView.WPuserAvatarIV,
-                                         private var date: TextView = itemView.WPuserMessageTimeTV,
-                                         private var message: TextView = itemView.WPuserMessageTV
+    inner class WPYourMessagesViewHolder(
+        itemView: View, var avatar: ImageView = itemView.WPuserAvatarIV,
+        private var date: TextView = itemView.WPuserMessageTimeTV,
+        private var message: TextView = itemView.WPuserMessageTV
     ) : RVViewHolder(itemView) {
 
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -205,7 +231,7 @@ class DialogueRecyclerViewAdapter(
             //endregion
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
+                .load(Server.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
                 .placeholder(R.drawable.photo)
                 .error(R.drawable.photo)
                 .fit()
@@ -235,7 +261,7 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -256,7 +282,7 @@ class DialogueRecyclerViewAdapter(
             with(mp) {
                 setDataSource(
                     context,
-                    Uri.parse("${Http.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
+                    Uri.parse("${Server.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
                     (v as ImageButton).setImageResource(R.drawable.play)
@@ -296,8 +322,8 @@ class DialogueRecyclerViewAdapter(
 
     inner class AMYourMessagesViewHolder(
         itemView: View,
-        var avatar: ImageView = itemView.AMuserAvatarIV,
-        var date: TextView = itemView.AMuserMessageTimeTV,
+        private var avatar: ImageView = itemView.AMuserAvatarIV,
+        private var date: TextView = itemView.AMuserMessageTimeTV,
     ) : RVViewHolder(itemView) {
 
         lateinit var mp: MediaPlayer
@@ -308,7 +334,7 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -328,7 +354,7 @@ class DialogueRecyclerViewAdapter(
             with(mp) {
                 setDataSource(
                     context,
-                    Uri.parse("${Http.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
+                    Uri.parse("${Server.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
                     (v as ImageButton).setImageResource(R.drawable.play)
@@ -363,6 +389,52 @@ class DialogueRecyclerViewAdapter(
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
+        }
+    }
+
+    inner class WFYourMessageViewHolder(
+        itemView: View,
+        private var avatar: ImageView = itemView.userAvatarIV,
+        private var date: TextView = itemView.userMessageTimeTV,
+        var fileName: TextView = itemView.userMessageFileNameTV
+    ) : RVViewHolder(itemView) {
+        fun bind(p: Int) {
+            Picasso.get()
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .fit()
+                .centerCrop()
+                .into(avatar)
+            date.text = getTime(messages[p].date_time)
+            fileName.text = messages[p].text
+            itemView.fileIV.setOnClickListener {
+                callbackForFile(messages[p].id, messages[p].text)
+            }
+        }
+    }
+
+    inner class WFMessageViewHolder(
+        itemView: View,
+        private var avatar: ImageView = itemView.memberAvatarIV,
+        private var date: TextView = itemView.memberMessageTimeTV,
+        var name: TextView = itemView.memberName,
+        var fileName: TextView = itemView.memberMessageFileNameTV
+    ) : RVViewHolder(itemView) {
+        fun bind(p: Int) {
+            Picasso.get()
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .fit()
+                .centerCrop()
+                .into(avatar)
+            date.text = getTime(messages[p].date_time)
+            name.text = (messages[p].sender_name + " " + messages[p].sender_surname)
+            fileName.text = messages[p].text
+            itemView.fileIV.setOnClickListener {
+                callbackForFile(messages[p].id, messages[p].text)
+            }
         }
     }
 

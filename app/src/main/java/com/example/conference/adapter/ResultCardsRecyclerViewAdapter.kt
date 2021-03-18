@@ -6,8 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
-import com.example.conference.ResultCard
-import com.example.conference.ResultCards
+import com.example.conference.json.ResultCards
 import kotlinx.android.synthetic.main.item_view_result_card.view.*
 
 class ResultCardsRecyclerViewAdapter(var results: ResultCards, val callback: (Int, String) -> Unit):

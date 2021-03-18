@@ -22,7 +22,7 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_margin="5dp"
-                app:cardCornerRadius="10dp">
+                app:cardCornerRadius="100dp">
 
                 <ImageView
                     android:id="@+id/memberAvatarIV"

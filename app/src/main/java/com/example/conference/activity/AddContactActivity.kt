@@ -2,20 +2,17 @@ package com.example.conference.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
 import com.example.conference.R
 import com.example.conference.db.entity.ContactEntity
 import com.example.conference.exception.GetUserInfoException
 import com.example.conference.json.UserInfo
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.AddContactViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_add_contact.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.*
@@ -42,7 +39,7 @@ class AddContactActivity : AppCompatActivity() {
                         vm.showToast(this@AddContactActivity, "Контакт уже существует")
                         return@launch
                     }
-                    val r = Http.get("/user/info/?id=" + email.hashCode())
+                    val r = Server.get("/user/info/?id=" + email.hashCode())
                     val getResult = r.body?.string()
                     if (!r.isSuccessful || getResult == "null")
                         throw GetUserInfoException()

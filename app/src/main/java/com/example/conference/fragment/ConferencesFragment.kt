@@ -21,19 +21,12 @@ import com.example.conference.R
 import com.example.conference.activity.ConferenceActivity
 import com.example.conference.activity.CreateConferenceActivity
 import com.example.conference.adapter.ConferencesRecyclerViewAdapter
-import com.example.conference.db.ConferenceRoomDatabase
-import com.example.conference.db.entity.ConferenceEntity
-import com.example.conference.json.ConferenceNotification
 import com.example.conference.json.OutputConferenceList
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ConferencesViewModel
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.fragment_conferences.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
-import okhttp3.ConnectionSpec
-import okhttp3.OkHttpClient
-import okhttp3.Request
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 
@@ -115,7 +108,7 @@ class ConferencesFragment : Fragment() {
 
     private suspend fun refreshList() {
         try {
-            val r = Http.get(String.format("/conference/getNewConference/?user_id=%s&last_conference_id=%s",
+            val r = Server.get(String.format("/conference/getNewConference/?user_id=%s&last_conference_id=%s",
                 activity?.getSharedPreferences("user_info", MODE_PRIVATE)
                     ?.getInt("user_id", 0),
                 vm.getLastID()))

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.conference">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,8 +19,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/NoActionBarTheme"
-        android:usesCleartextTraffic="true">
-        <activity android:name=".activity.OpinionActivity"></activity>
+        android:usesCleartextTraffic="true"
+        tools:replace="android:theme">
+        <activity android:name=".activity.OpinionActivity" />
         <activity
             android:name=".activity.AddResultActivity"
             android:windowSoftInputMode="adjustResize" />

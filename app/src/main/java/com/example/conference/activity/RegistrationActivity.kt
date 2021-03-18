@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.conference.R
 import com.example.conference.exception.RegistrationException
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.RegistrationViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_registration.*
@@ -52,7 +52,7 @@ class RegistrationActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     GlobalScope.launch {
                         try {
-                            val r = Http.get(
+                            val r = Server.get(
                                 String.format(
                                     "/user/registration/?id=%s&email=%s&name=%s&surname=%s",
                                     id, URLEncoder.encode(email, "UTF-8"), name, surname

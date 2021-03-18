@@ -1,7 +1,6 @@
 package com.example.conference.adapter
 
 import android.content.Context
-import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Handler
@@ -14,16 +13,21 @@ import android.widget.TextView
 import com.example.conference.R
 import com.example.conference.db.data.SenderEnum
 import com.example.conference.db.entity.CMessageEntity
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.message_item_view.view.*
+import kotlinx.android.synthetic.main.message_item_view.view.memberAvatarIV
+import kotlinx.android.synthetic.main.message_item_view.view.memberMessageTimeTV
+import kotlinx.android.synthetic.main.message_item_view.view.memberName
 import kotlinx.android.synthetic.main.message_item_view_audio_message.view.*
+import kotlinx.android.synthetic.main.message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.message_item_view_with_photo.view.*
 import kotlinx.android.synthetic.main.your_message_item_view.view.*
+import kotlinx.android.synthetic.main.your_message_item_view.view.userAvatarIV
+import kotlinx.android.synthetic.main.your_message_item_view.view.userMessageTimeTV
 import kotlinx.android.synthetic.main.your_message_item_view_audio_message.view.*
+import kotlinx.android.synthetic.main.your_message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_photo.view.*
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -33,7 +37,8 @@ import androidx.recyclerview.widget.RecyclerView.ViewHolder as RVViewHolder
 class ConferenceRecyclerViewAdapter(
     var messages: List<CMessageEntity>,
     val context: Context,
-    val callbackForPhoto: (Int) -> Unit
+    val callbackForPhoto: (Int) -> Unit,
+    val callbackForFile: (Int, String) -> Unit
 ) : RVAdapter<RVViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RVViewHolder {
@@ -68,6 +73,16 @@ class ConferenceRecyclerViewAdapter(
                     .inflate(R.layout.message_item_view_audio_message, parent, false)
                 AMMessagesViewHolder(itemView)
             }
+            6 -> {
+                val itemView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.your_message_item_view_with_file, parent, false)
+                WFYourMessageViewHolder(itemView)
+            }
+            7 -> {
+                val itemView = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.message_item_view_with_file, parent, false)
+                WFMessageViewHolder(itemView)
+            }
             else -> throw IllegalArgumentException()
         }
     }
@@ -92,6 +107,12 @@ class ConferenceRecyclerViewAdapter(
             5 -> with(holder as AMMessagesViewHolder) {
                 bind(position)
             }
+            6 -> with(holder as WFYourMessageViewHolder) {
+                bind(position)
+            }
+            7 -> with(holder as WFMessageViewHolder) {
+                bind(position)
+            }
         }
     }
 
@@ -104,6 +125,7 @@ class ConferenceRecyclerViewAdapter(
                     1 -> 0
                     2 -> 1
                     3 -> 2
+                    4 -> 6
                     else -> -1
                 }
 
@@ -112,6 +134,7 @@ class ConferenceRecyclerViewAdapter(
                     1 -> 3
                     2 -> 4
                     3 -> 5
+                    4 -> 7
                     else -> -1
                 }
             else -> -1
@@ -127,7 +150,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -149,7 +172,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -171,7 +194,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -180,7 +203,7 @@ class ConferenceRecyclerViewAdapter(
             //endregion
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
+                .load(Server.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
                 .placeholder(R.drawable.photo)
                 .error(R.drawable.photo)
                 .fit()
@@ -205,7 +228,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -214,7 +237,7 @@ class ConferenceRecyclerViewAdapter(
             //endregion
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
+                .load(Server.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
                 .placeholder(R.drawable.photo)
                 .error(R.drawable.photo)
                 .fit()
@@ -244,7 +267,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -265,7 +288,7 @@ class ConferenceRecyclerViewAdapter(
             with(mp) {
                 setDataSource(
                     context,
-                    Uri.parse("${Http.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
+                    Uri.parse("${Server.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
                     (v as ImageButton).setImageResource(R.drawable.play)
@@ -317,7 +340,7 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             //region Picasso
             Picasso.get()
-                .load(Http.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -337,7 +360,7 @@ class ConferenceRecyclerViewAdapter(
             with(mp) {
                 setDataSource(
                     context,
-                    Uri.parse("${Http.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
+                    Uri.parse("${Server.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
                     (v as ImageButton).setImageResource(R.drawable.play)
@@ -372,6 +395,52 @@ class ConferenceRecyclerViewAdapter(
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
+        }
+    }
+
+    inner class WFYourMessageViewHolder(
+        itemView: View,
+        private var avatar: ImageView = itemView.userAvatarIV,
+        private var date: TextView = itemView.userMessageTimeTV,
+        var fileName: TextView = itemView.userMessageFileNameTV
+    ) : RVViewHolder(itemView) {
+        fun bind(p: Int) {
+            Picasso.get()
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .fit()
+                .centerCrop()
+                .into(avatar)
+            date.text = getTime(messages[p].date_time)
+            fileName.text = messages[p].text
+            itemView.fileIV.setOnClickListener {
+                callbackForFile(messages[p].id, messages[p].text)
+            }
+        }
+    }
+
+    inner class WFMessageViewHolder(
+        itemView: View,
+        private var avatar: ImageView = itemView.memberAvatarIV,
+        private var date: TextView = itemView.memberMessageTimeTV,
+        var name: TextView = itemView.memberName,
+        var fileName: TextView = itemView.memberMessageFileNameTV
+    ) : RVViewHolder(itemView) {
+        fun bind(p: Int) {
+            Picasso.get()
+                .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
+                .placeholder(R.drawable.placeholder)
+                .error(R.drawable.placeholder)
+                .fit()
+                .centerCrop()
+                .into(avatar)
+            date.text = getTime(messages[p].date_time)
+            name.text = (messages[p].sender_name + " " + messages[p].sender_surname)
+            fileName.text = messages[p].text
+            itemView.fileIV.setOnClickListener {
+                callbackForFile(messages[p].id, messages[p].text)
+            }
         }
     }
 

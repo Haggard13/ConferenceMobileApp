@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.entity.CMessageMinimal
 import com.example.conference.db.entity.ConferenceEntity
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.group_message_item_view.view.*
 import java.text.SimpleDateFormat
@@ -40,7 +40,7 @@ class ConferencesRecyclerViewAdapter(
         var time: TextView = itemView.lastMessageTimeTV
         fun bind(position: Int) {
             Picasso.get()
-                .load(Http.baseURL
+                .load(Server.baseURL
                         + "/conference/avatar/download/?id="
                         + conferences[position].id)
                 .placeholder(R.drawable.placeholder)

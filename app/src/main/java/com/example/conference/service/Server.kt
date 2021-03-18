@@ -1,5 +1,6 @@
 package com.example.conference.service
 
+import com.example.conference.file.File
 import com.example.conference.db.entity.CMessageEntity
 import com.example.conference.db.entity.DMessageEntity
 import okhttp3.*
@@ -8,7 +9,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.net.URLEncoder
 
 
-object Http {
+object Server {
     const val baseURL = "http://192.168.0.103:8082"
 
     fun get(url: String): Response {
@@ -158,6 +159,60 @@ object Http {
             .url(
                 baseURL +
                         "/dialogue/sendAudioMessage" +
+                        "/${URLEncoder.encode(DMessageEntity.text, "UTF-8")}" +
+                        "/${DMessageEntity.dialogue_id}" +
+                        "/${DMessageEntity.date_time}" +
+                        "/${DMessageEntity.sender_id}" +
+                        "/${DMessageEntity.sender_name}" +
+                        "/${DMessageEntity.sender_surname}")
+            .post(requestBody)
+            .build()
+        val client = OkHttpClient.Builder().build()
+        return client.newCall(request).execute()
+    }
+
+    fun sendConferenceFile(
+        file: File?,
+        CMessageEntity: CMessageEntity
+    ): Response {
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file" , file!!.name,
+                file!!.file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.file.size)
+            )
+            .build()
+
+        val request = Request.Builder()
+            .url(
+                baseURL +
+                        "/conference/sendFile" +
+                        "/${URLEncoder.encode(CMessageEntity.text, "UTF-8")}" +
+                        "/${CMessageEntity.conference_id}" +
+                        "/${CMessageEntity.date_time}" +
+                        "/${CMessageEntity.sender_id}" +
+                        "/${CMessageEntity.sender_name}" +
+                        "/${CMessageEntity.sender_surname}")
+            .post(requestBody)
+            .build()
+        val client = OkHttpClient.Builder().build()
+        return client.newCall(request).execute()
+    }
+
+    fun sendDialogueFile(
+        file: File?,
+        DMessageEntity: DMessageEntity,
+    ): Response {
+        val requestBody = MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("file", file!!.name,
+                file.file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.file.size)
+            )
+            .build()
+
+        val request = Request.Builder()
+            .url(
+                baseURL +
+                        "/dialogue/sendFile" +
                         "/${URLEncoder.encode(DMessageEntity.text, "UTF-8")}" +
                         "/${DMessageEntity.dialogue_id}" +
                         "/${DMessageEntity.date_time}" +

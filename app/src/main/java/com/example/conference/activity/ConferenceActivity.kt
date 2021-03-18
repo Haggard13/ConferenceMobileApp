@@ -27,11 +27,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
 import com.example.conference.application.ConferenceApplication
 import com.example.conference.db.entity.CMessageEntity
+import com.example.conference.exception.LoadFileException
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.example.conference.vm.ConferenceViewModel
 import kotlinx.android.synthetic.main.activity_conference.*
+import kotlinx.android.synthetic.main.activity_dialogue.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
 import java.io.File
@@ -40,13 +42,14 @@ import java.lang.IllegalStateException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.*
+import com.example.conference.file.File as MyFile
 
 class ConferenceActivity : AppCompatActivity() {
-
     lateinit var vm: ConferenceViewModel
-    var updatePossible = false
+    private var updatePossible = false
     private var photo: ByteArray? = null
     private var audio: ByteArray? = null
+    private var file: MyFile? = null
     private var messageType = MESSAGE_WITH_TEXT
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,22 +59,7 @@ class ConferenceActivity : AppCompatActivity() {
         vm = ViewModelProvider(this).get(ConferenceViewModel::class.java)
         vm.conferenceID = intent.getIntExtra("conference_id", -1)
 
-
-        GlobalScope.launch {
-            try {
-                val response = Http.get("/conference/getConferenceName/?id=${vm.conferenceID}")
-                if (!response.isSuccessful) return@launch
-                val name = response.body!!.string()
-                if (name == "") return@launch
-                val conference = vm.getConference()
-                if (name != conference.name) {
-                    conference.name = name
-                    vm.update(conference)
-                    vm.showToast("Изменено название конференции")
-                }
-            } catch (e: SocketTimeoutException) {}
-            catch (e: ConnectException) {}
-        }
+        checkConferenceName()
 
         vm.viewModelScope.launch {
             conferenceNameTV.text = vm.getConference().name
@@ -85,121 +73,10 @@ class ConferenceActivity : AppCompatActivity() {
             conferenceRV.adapter = vm.adapter
         }
 
-        confBackIB.setOnClickListener { finish() }
-        conferenceSettingsIB.setOnClickListener {
-            startActivity(
-                Intent(this, ConferenceSettingsActivity::class.java)
-                    .putExtra("conference_id", vm.conferenceID)
-            )
-        }
-        addFileConferenceIB.setOnClickListener(this::onAddFileClick)
-        resultsCardIB.setOnClickListener {
-            val i = Intent(this, ResultCardsActivity::class.java)
-            i.putExtra("conference_id", vm.conferenceID)
-            startActivity(i)
-        }
-
         this.registerReceiver(
             NewNameBroadcastReceiver(),
             IntentFilter("NEW_CONFERENCE_NAME")
         )
-    }
-
-    fun onEnterMessageButtonClick(v: View) {
-        var messageText = conferenceMessageET.text.toString()
-        if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO)
-            return
-
-        messageText = messageText.trim()
-        val date = Date().time
-
-        GlobalScope.launch {
-            val sendResult = sendMessage(messageText, date)
-
-            if (sendResult != null) {
-                vm.saveMessage(sendResult)
-                vm.updateRV()
-                withContext(Main) {
-                    if (messageType != MESSAGE_WITH_AUDIO)
-                        conferenceMessageET.setText("")
-                }
-                messageType = MESSAGE_WITH_TEXT
-            } else if (messageType == MESSAGE_WITH_AUDIO) {
-                messageType = MESSAGE_WITH_TEXT
-            }
-        }
-    }
-
-    private suspend fun sendMessage(messageText: String, date: Long): CMessageEntity? {
-        var message: CMessageEntity? = null
-
-        try {
-            when(messageType) {
-                MESSAGE_WITH_PHOTO -> {
-                    val r = Http.sendConferenceMessagePhoto(
-                        photo,
-                        vm.createCMessageEntity(messageText, date, 0, 2)
-                    )
-                    if (!r.isSuccessful) {
-                        throw SendMessageException()
-                    }
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw LoadImageException()
-                    message = vm.createCMessageEntity(
-                        messageText,
-                        date,
-                        r.headers["message_id"]!!.toInt(),
-                        2
-                    )
-                }
-                MESSAGE_WITH_AUDIO -> {
-                    val r = Http.sendConferenceMessageAudio(audio,
-                    vm.createCMessageEntity("AudioMessage", date, 0, 3))
-                    if (!r.isSuccessful) {
-                        throw SendMessageException()
-                    }
-                    if (r.headers["message_id"]?.toInt() == -1) {
-                        throw SendMessageException()
-                    }
-                    message = vm.createCMessageEntity("",
-                        date,
-                        r.headers["message_id"]!!.toInt(),
-                        3
-                    )
-                }
-                MESSAGE_WITH_TEXT -> {
-                     val r = Http.get(vm.generateURL(messageText, date))
-                     if (!r.isSuccessful) {
-                         throw SendMessageException()
-                     }
-                     val messageId = r.body!!.string().toInt()
-                     if (messageId == -1) {
-                         throw SendMessageException()
-                     }
-                     message = vm.createCMessageEntity(messageText, date, messageId, 1)
-                }
-            }
-            vm.updateMessages()
-            photo = null
-            audio = null
-            withContext(Main) {
-                addFileConferenceIB.setImageResource(R.drawable.add)
-                addFileConferenceIB.isEnabled = true
-            }
-        } catch (e: SendMessageException) {
-            vm.showToast("Ошибка отправки")
-        } catch (e: ConnectException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: SocketTimeoutException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: LoadImageException) {
-            vm.showToast("Не удалось отправить фотографию")
-        }
-        return message
-    }
-
-    private fun onAddFileClick(v: View) {
-        showPopupMenu(v)
     }
 
     override fun onResume() {
@@ -237,38 +114,150 @@ class ConferenceActivity : AppCompatActivity() {
                     vm.showToast("Не удалось загрузить изображение")
                 }
             }
-        }
-    }
-
-    inner class NewNameBroadcastReceiver: BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
+        } else if (requestCode == FILE_LOAD && resultCode == RESULT_OK) {
             vm.viewModelScope.launch {
-                conferenceNameTV.text = vm.getConference().name
+                try {
+                    val fileUri = data?.data ?: throw LoadFileException()
+                    val fileStream = contentResolver.openInputStream(fileUri)
+                    file = MyFile(fileStream!!.readBytes(), File(fileUri.path!!).name)
+                    messageType = DialogueActivity.MESSAGE_WITH_FILE
+                    dialogueAddFileIB.setImageResource(R.drawable.file)
+                    dialogueAddFileIB.isEnabled = false
+                } catch (e: IOException) {
+                    vm.showToast("Не удалось загрузить файл")
+                }
             }
         }
     }
 
-    private fun showPopupMenu(v: View) {
-        val popupMenu = PopupMenu(this, v)
-        popupMenu.inflate(R.menu.add_file_menu)
+    fun onEnterMessageButtonClick(v: View) {
+        var messageText = conferenceMessageET.text.toString()
+        if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO
+            && messageType != MESSAGE_WITH_FILE)
+            return
 
-        popupMenu.setOnMenuItemClickListener {
-            when (it.itemId) {
-                R.id.photo -> {
-                    loadPhoto()
-                    true
+        messageText = messageText.trim()
+        val date = Date().time
+
+        GlobalScope.launch {
+            val sendingResult = sendMessage(messageText, date)
+
+            if (sendingResult != null) {
+                vm.saveMessage(sendingResult)
+                vm.updateRV()
+                withContext(Main) {
+                    if (messageType != MESSAGE_WITH_AUDIO && messageType != MESSAGE_WITH_FILE)
+                        conferenceMessageET.setText("")
                 }
-                R.id.audioMessage -> {
-                    recordAudioMessage()
-                    true
-                }
-                else -> {
-                    false
-                }
+                messageType = MESSAGE_WITH_TEXT
+            } else if (messageType == MESSAGE_WITH_AUDIO || messageType == MESSAGE_WITH_FILE) {
+                messageType = MESSAGE_WITH_TEXT
             }
         }
+    }
 
-        popupMenu.show()
+    fun onAddFileClick(v: View) = showPopupMenu(v)
+
+    fun onStartConferenceClick(v: View) {
+        val intent = Intent(this, MeetActivity::class.java)
+        startActivity(intent)
+    }
+
+    fun onBackClick(v: View) = finish()
+
+    fun onResultCardClick(v: View) {
+        val i = Intent(this, ResultCardsActivity::class.java)
+        i.putExtra("conference_id", vm.conferenceID)
+        startActivity(i)
+    }
+
+    fun onSettingsConferenceClick(v: View) {
+        startActivity(
+            Intent(this, ConferenceSettingsActivity::class.java)
+                .putExtra("conference_id", vm.conferenceID)
+        )
+    }
+
+    private suspend fun sendMessage(messageText: String, date: Long): CMessageEntity? {
+        var message: CMessageEntity? = null
+
+        try {
+            when(messageType) {
+                MESSAGE_WITH_PHOTO -> {
+                    val r = Server.sendConferenceMessagePhoto(
+                        photo,
+                        vm.createCMessageEntity(messageText, date, 0, 2)
+                    )
+                    if (!r.isSuccessful) {
+                        throw SendMessageException()
+                    }
+                    if (r.headers["message_id"]?.toInt() == -1)
+                        throw LoadImageException()
+                    message = vm.createCMessageEntity(
+                        messageText,
+                        date,
+                        r.headers["message_id"]!!.toInt(),
+                        2
+                    )
+                }
+                MESSAGE_WITH_AUDIO -> {
+                    val r = Server.sendConferenceMessageAudio(audio,
+                    vm.createCMessageEntity("AudioMessage", date, 0, 3))
+                    if (!r.isSuccessful) {
+                        throw SendMessageException()
+                    }
+                    if (r.headers["message_id"]?.toInt() == -1) {
+                        throw SendMessageException()
+                    }
+                    message = vm.createCMessageEntity("",
+                        date,
+                        r.headers["message_id"]!!.toInt(),
+                        3
+                    )
+                }
+                MESSAGE_WITH_TEXT -> {
+                     val r = Server.get(vm.generateURL(messageText, date))
+                     if (!r.isSuccessful) {
+                         throw SendMessageException()
+                     }
+                     val messageId = r.body!!.string().toInt()
+                     if (messageId == -1) {
+                         throw SendMessageException()
+                     }
+                     message = vm.createCMessageEntity(messageText, date, messageId, 1)
+                }
+                MESSAGE_WITH_FILE -> {
+                    val r = Server.sendConferenceFile(file,
+                    vm.createCMessageEntity(file!!.name, date, 0,4))
+                    if (!r.isSuccessful)
+                        throw SendMessageException()
+                    if (r.headers["message_id"]?.toInt() == -1)
+                        throw SendMessageException()
+                    message = vm.createCMessageEntity(
+                        file!!.name,
+                        date,
+                        r.headers["message_id"]!!.toInt(),
+                        4
+                    )
+                }
+            }
+            vm.updateMessages()
+            photo = null
+            audio = null
+            withContext(Main) {
+                addFileConferenceIB.setImageResource(R.drawable.add)
+                addFileConferenceIB.isEnabled = true
+            }
+        } catch (e: SendMessageException) {
+            vm.showToast("Ошибка отправки")
+        } catch (e: ConnectException) {
+            vm.showToast("Проверьте подключение к сети")
+        } catch (e: SocketTimeoutException) {
+            vm.showToast("Проверьте подключение к сети")
+        } catch (e: LoadImageException) {
+            vm.showToast("Не удалось отправить фотографию")
+        }
+        return message
     }
 
     private fun loadPhoto() {
@@ -277,20 +266,10 @@ class ConferenceActivity : AppCompatActivity() {
         startActivityForResult(pickIntent, 0)
     }
 
-    companion object {
-        const val PHOTOGRAPHY_LOAD = 0
-
-        const val MESSAGE_WITH_TEXT = 1
-        const val MESSAGE_WITH_PHOTO = 2
-        const val MESSAGE_WITH_AUDIO = 3
-    }
-
-    private fun checkPermission() =
-        ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this, RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-
-    private fun requestPermission() {
-        ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE, RECORD_AUDIO), 1)
+    private fun loadFile() {
+        val pickIntent = Intent(Intent.ACTION_PICK)
+        pickIntent.type = "*/*"
+        startActivityForResult(pickIntent, FILE_LOAD)
     }
 
     private fun recordAudioMessage() {
@@ -338,6 +317,24 @@ class ConferenceActivity : AppCompatActivity() {
         return mr
     }
 
+    private fun checkConferenceName() {
+        GlobalScope.launch {
+            try {
+                val response = Server.get("/conference/getConferenceName/?id=${vm.conferenceID}")
+                if (!response.isSuccessful) return@launch
+                val name = response.body!!.string()
+                if (name == "") return@launch
+                val conference = vm.getConference()
+                if (name != conference.name) {
+                    conference.name = name
+                    vm.update(conference)
+                    vm.showToast("Изменено название конференции")
+                }
+            } catch (e: SocketTimeoutException) {}
+            catch (e: ConnectException) {}
+        }
+    }
+
     private fun setAudioRecordAnimation() {
         val a = AnimationUtils.loadAnimation(
             this, R.anim.audio_recording_anim
@@ -345,5 +342,58 @@ class ConferenceActivity : AppCompatActivity() {
         a.repeatMode = Animation.REVERSE
         a.repeatCount = Animation.INFINITE
         conferenceMessageET.startAnimation(a)
+    }
+
+    private fun showPopupMenu(v: View) {
+        val popupMenu = PopupMenu(this, v)
+        popupMenu.inflate(R.menu.add_file_menu)
+
+        popupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.photo -> {
+                    loadPhoto()
+                    true
+                }
+                R.id.audioMessage -> {
+                    recordAudioMessage()
+                    true
+                }
+                R.id.file -> {
+                    loadFile()
+                    true
+                }
+                else -> {
+                    false
+                }
+            }
+        }
+
+        popupMenu.show()
+    }
+
+    private fun checkPermission() =
+        ContextCompat.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+
+    private fun requestPermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE, RECORD_AUDIO), 1)
+    }
+
+    companion object {
+        const val PHOTOGRAPHY_LOAD = 0
+        const val FILE_LOAD = 5
+
+        const val MESSAGE_WITH_TEXT = 1
+        const val MESSAGE_WITH_PHOTO = 2
+        const val MESSAGE_WITH_AUDIO = 3
+        const val MESSAGE_WITH_FILE = 4
+    }
+
+    inner class NewNameBroadcastReceiver: BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            vm.viewModelScope.launch {
+                conferenceNameTV.text = vm.getConference().name
+            }
+        }
     }
 }

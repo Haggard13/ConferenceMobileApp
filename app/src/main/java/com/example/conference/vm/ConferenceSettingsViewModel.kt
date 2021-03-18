@@ -3,15 +3,13 @@ package com.example.conference.vm
 import android.app.Application
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.adapter.ConferenceSettingsRecyclerViewAdapter
 import com.example.conference.db.ConferenceRoomDatabase
 import com.example.conference.db.entity.ConferenceEntity
 import com.example.conference.exception.LoadConferenceMembersException
 import com.example.conference.json.ConferenceMembersList
-import com.example.conference.service.Http
+import com.example.conference.service.Server
 import com.google.gson.Gson
-import kotlinx.android.synthetic.main.activity_conference_settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.ConnectException
@@ -39,7 +37,7 @@ class ConferenceSettingsViewModel(val app: Application): AndroidViewModel(app) {
 
     suspend fun updateRV() {
         try {
-            val r = Http.get("/conference/$conferenceID/members")
+            val r = Server.get("/conference/$conferenceID/members")
             if (!r.isSuccessful)
                 throw LoadConferenceMembersException()
             val json = r.body!!.string()

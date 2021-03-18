@@ -7,7 +7,6 @@ import android.app.Service
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
-import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.conference.R
@@ -66,12 +65,12 @@ class MessageService : Service() {
 
     //region Check Methods
     private suspend fun checkNewConference() {
-        val r = Http.get(String.format("/conference/checkNewConference/?user_id=%s", USER_ID))
+        val r = Server.get(String.format("/conference/checkNewConference/?user_id=%s", USER_ID))
         if (r.isSuccessful) {
             val cs: ConferenceNotification =
                 Gson().fromJson(r.body?.string(), ConferenceNotification::class.java)
             cs.conference_list.forEach {
-                withContext(Dispatchers.Main) {
+                withContext(Main) {
                     newConferenceNotification(it)
                 }
             }
@@ -80,7 +79,7 @@ class MessageService : Service() {
 
     private suspend fun checkNewConferenceMessages() {
         val json = URLEncoder.encode(Gson().toJson(getCMessagesList()), "UTF-8")
-        val r = Http.get(String.format("/conference/checkNewMessage/?conference_list=%s&user_id=%s",
+        val r = Server.get(String.format("/conference/checkNewMessage/?conference_list=%s&user_id=%s",
             json, USER_ID))
         if (r.isSuccessful) {
             val mns: MNList =
@@ -98,7 +97,7 @@ class MessageService : Service() {
     }
 
     private suspend fun checkNewDialogue() {
-        val r = Http.get(String.format("/dialogue/checkNewDialogue/?user_id=%s",
+        val r = Server.get(String.format("/dialogue/checkNewDialogue/?user_id=%s",
             USER_ID))
         if (r.isSuccessful) {
             val ds: DialogueNotification = Gson().fromJson(r.body?.string(), DialogueNotification::class.java)
@@ -112,7 +111,7 @@ class MessageService : Service() {
 
     private suspend fun checkNewDialogueMessages() {
         val json = URLEncoder.encode(Gson().toJson(getDMessagesList()), "UTF-8")
-        val r = Http.get(String.format("/dialogue/checkNewMessage/?dialogue_list=%s&user_id=%s",
+        val r = Server.get(String.format("/dialogue/checkNewMessage/?dialogue_list=%s&user_id=%s",
             json, getSharedPreferences("user_info", MODE_PRIVATE).getInt("user_id", 0)))
         if (r.isSuccessful) {
             val nms: MNList =
@@ -192,7 +191,7 @@ class MessageService : Service() {
 
             val conferenceIcon = Picasso
                 .get()
-                .load(if (isConference) "${Http.baseURL}/conference/avatar/download/?id=${nm.id}" else "${Http.baseURL}/user/avatar/download/?id=${nm.id}")
+                .load(if (isConference) "${Server.baseURL}/conference/avatar/download/?id=${nm.id}" else "${Server.baseURL}/user/avatar/download/?id=${nm.id}")
                 .get()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

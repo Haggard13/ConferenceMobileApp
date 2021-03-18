@@ -15,15 +15,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.conference.R
-import com.example.conference.activity.AddContactActivity
 import com.example.conference.activity.CreateDialogueActivity
 import com.example.conference.activity.DialogueActivity
 import com.example.conference.adapter.DialoguesRecyclerViewAdapter
 import com.example.conference.json.OutputDialogueList
-import com.example.conference.service.Http
-import com.example.conference.vm.DialogueViewModel
+import com.example.conference.service.Server
 import com.example.conference.vm.DialoguesViewModel
-import com.google.api.Distribution
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -102,7 +99,7 @@ class DialoguesFragment : Fragment() {
 
     private suspend fun refreshList() {
         try {
-            val r = Http.get(
+            val r = Server.get(
                 String.format(
                     "/dialogue/getNewDialogue/?user_id=%s&last_dialogue_id=%s",
                     activity?.getSharedPreferences("user_info", Context.MODE_PRIVATE)
