@@ -4,10 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.conference.db.dao.*
 import com.example.conference.db.entity.*
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -15,7 +13,8 @@ import kotlinx.coroutines.launch
         ConferenceEntity::class,
         DialogueEntity::class,
         CMessageEntity::class,
-        DMessageEntity::class
+        DMessageEntity::class,
+        MeetChatMessageEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -27,6 +26,7 @@ abstract class ConferenceRoomDatabase: RoomDatabase() {
     abstract fun dialogueDao(): DialogueDao
     abstract fun cMessageDao(): CMessageDao
     abstract fun dMessageDao(): DMessageDao
+    abstract fun meetChatMessageDao(): MeetChatMessagesDao
 
     companion object{
         @Volatile

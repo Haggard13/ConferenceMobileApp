@@ -12,154 +12,156 @@ import android.media.MediaRecorder.AudioSource.MIC
 import android.media.MediaRecorder.OutputFormat.AMR_NB
 import android.media.MediaRecorder.OutputFormat.THREE_GPP
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.conference.MessageType.*
 import com.example.conference.R
+import com.example.conference.adapter.ConferenceRecyclerViewAdapter
 import com.example.conference.application.ConferenceApplication
-import com.example.conference.db.entity.CMessageEntity
-import com.example.conference.exception.LoadFileException
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
+import com.example.conference.file.Addition
+import com.example.conference.json.CMessageList
 import com.example.conference.service.Server
 import com.example.conference.vm.ConferenceViewModel
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_conference.*
 import kotlinx.android.synthetic.main.activity_dialogue.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.Main
+import okhttp3.Response
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.net.ConnectException
+import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
-import com.example.conference.file.File as MyFile
 
 class ConferenceActivity : AppCompatActivity() {
-    lateinit var vm: ConferenceViewModel
-    private var updatePossible = false
-    private var photo: ByteArray? = null
-    private var audio: ByteArray? = null
-    private var file: MyFile? = null
+    private companion object {
+        const val PHOTO_LOADING = 0
+        const val FILE_LOADING = 1
+    }
+
+    private var checkingNewMessagesIsPossible = false
+    private var addition: Addition? = null
     private var messageType = MESSAGE_WITH_TEXT
+    private var adapterIsInitialized = false
+    lateinit var viewModel: ConferenceViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conference)
 
-        vm = ViewModelProvider(this).get(ConferenceViewModel::class.java)
-        vm.conferenceID = intent.getIntExtra("conference_id", -1)
+        viewModel = ViewModelProvider(this).get(ConferenceViewModel::class.java)
+        viewModel.conferenceID = intent.getIntExtra("conference_id", -1)
 
         checkConferenceName()
 
-        vm.viewModelScope.launch {
-            conferenceNameTV.text = vm.getConference().name
-            vm.initMessages()
-            vm.initAdapter(this@ConferenceActivity)
-            conferenceRV.layoutManager = LinearLayoutManager(
+        viewModel.viewModelScope.launch {
+            conference_name_tv.text = viewModel.getConference().name
+            conference_messages_rv.layoutManager = LinearLayoutManager(
                 this@ConferenceActivity,
                 LinearLayoutManager.VERTICAL,
                 true
             )
-            conferenceRV.adapter = vm.adapter
+            val messages = viewModel.getMessages()
+            conference_messages_rv.adapter = ConferenceRecyclerViewAdapter(
+                messages,
+                context = this@ConferenceActivity,
+                this@ConferenceActivity::callbackForPhoto,
+                this@ConferenceActivity::callbackForFile
+            )
+            adapterIsInitialized = true
         }
 
         this.registerReceiver(
-            NewNameBroadcastReceiver(),
+            this.NewNameBroadcastReceiver(),
             IntentFilter("NEW_CONFERENCE_NAME")
         )
     }
 
     override fun onResume() {
         super.onResume()
-        updatePossible = true
+        checkingNewMessagesIsPossible = true
         GlobalScope.launch {
-            while (updatePossible) {
-                if (vm.messagesIsInitialize()) {
-                    vm.updateMessages()
+            while (checkingNewMessagesIsPossible) {
+                if (adapterIsInitialized) {
+                    val newMessages: Boolean = Server.checkNewConferenceMessages(
+                        viewModel.conferenceID,
+                        viewModel.getLastMessageID()
+                    )
+                    if (newMessages) {
+                        updateRecyclerView()
+                    }
+                    delay(5 * 1000)
                 }
-                delay(5 * 1000)
             }
         }
-        (applicationContext as ConferenceApplication).conference_id = vm.conferenceID
+        (applicationContext as ConferenceApplication).conference_id = viewModel.conferenceID
     }
 
     override fun onPause() {
         super.onPause()
-        updatePossible = false
+        checkingNewMessagesIsPossible = false
         (applicationContext as ConferenceApplication).conference_id = 0
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PHOTOGRAPHY_LOAD && resultCode == RESULT_OK) {
-            vm.viewModelScope.launch {
+        if (requestCode == RESULT_OK) {
+            viewModel.viewModelScope.launch {
                 try {
-                    val imageUri = data?.data ?: throw LoadImageException()
-                    val fileStream = contentResolver.openInputStream(imageUri)
-                    photo = fileStream!!.readBytes()
-                    messageType = MESSAGE_WITH_PHOTO
-                    addFileConferenceIB.setImageResource(R.drawable.photo)
-                    addFileConferenceIB.isEnabled = false
+                    val additionUri = data?.data ?: throw LoadImageException()
+                    val fileStream = contentResolver.openInputStream(additionUri)
+                    when (requestCode) {
+                        FILE_LOADING -> {
+                            addition =
+                                Addition(fileStream!!.readBytes(), File(additionUri.path!!).name)
+                            messageType = MESSAGE_WITH_FILE
+                            conference_add_addition_ib.setImageResource(R.drawable.file)
+                        }
+
+                        PHOTO_LOADING -> {
+                            addition = Addition(fileStream!!.readBytes(), "photo")
+                            messageType = MESSAGE_WITH_PHOTO
+                            conference_add_addition_ib.setImageResource(R.drawable.photo)
+                        }
+                    }
+                    conference_add_addition_ib.isEnabled = false
                 } catch (e: IOException) {
-                    vm.showToast("Не удалось загрузить изображение")
-                }
-            }
-        } else if (requestCode == FILE_LOAD && resultCode == RESULT_OK) {
-            vm.viewModelScope.launch {
-                try {
-                    val fileUri = data?.data ?: throw LoadFileException()
-                    val fileStream = contentResolver.openInputStream(fileUri)
-                    file = MyFile(fileStream!!.readBytes(), File(fileUri.path!!).name)
-                    messageType = DialogueActivity.MESSAGE_WITH_FILE
-                    dialogueAddFileIB.setImageResource(R.drawable.file)
-                    dialogueAddFileIB.isEnabled = false
-                } catch (e: IOException) {
-                    vm.showToast("Не удалось загрузить файл")
+                    showToast("Не удалось загрузить вложение")
                 }
             }
         }
     }
 
-    fun onEnterMessageButtonClick(v: View) {
-        var messageText = conferenceMessageET.text.toString()
-        if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO
-            && messageType != MESSAGE_WITH_FILE)
-            return
+    fun onSendMessageButtonClick(v: View) {
+        conference_message_sending_pb.visibility = View.VISIBLE
 
-        messageText = messageText.trim()
-        val date = Date().time
-
-        GlobalScope.launch {
-            val sendingResult = sendMessage(messageText, date)
-
-            if (sendingResult != null) {
-                vm.saveMessage(sendingResult)
-                vm.updateRV()
-                withContext(Main) {
-                    if (messageType != MESSAGE_WITH_AUDIO && messageType != MESSAGE_WITH_FILE)
-                        conferenceMessageET.setText("")
-                }
-                messageType = MESSAGE_WITH_TEXT
-            } else if (messageType == MESSAGE_WITH_AUDIO || messageType == MESSAGE_WITH_FILE) {
-                messageType = MESSAGE_WITH_TEXT
-            }
-        }
+        GlobalScope.launch { sendMessage() }
     }
 
     fun onAddFileClick(v: View) = showPopupMenu(v)
 
     fun onStartConferenceClick(v: View) {
         val intent = Intent(this, MeetActivity::class.java)
+        intent.putExtra("conferenceID", viewModel.conferenceID)
         startActivity(intent)
     }
 
@@ -167,97 +169,72 @@ class ConferenceActivity : AppCompatActivity() {
 
     fun onResultCardClick(v: View) {
         val i = Intent(this, ResultCardsActivity::class.java)
-        i.putExtra("conference_id", vm.conferenceID)
+        i.putExtra("conference_id", viewModel.conferenceID)
         startActivity(i)
     }
 
     fun onSettingsConferenceClick(v: View) {
         startActivity(
             Intent(this, ConferenceSettingsActivity::class.java)
-                .putExtra("conference_id", vm.conferenceID)
+                .putExtra("conference_id", viewModel.conferenceID)
         )
     }
 
-    private suspend fun sendMessage(messageText: String, date: Long): CMessageEntity? {
-        var message: CMessageEntity? = null
-
+    private suspend fun sendMessage() {
+        val messageText = conference_message_et.text.toString().trim()
         try {
             when(messageType) {
-                MESSAGE_WITH_PHOTO -> {
-                    val r = Server.sendConferenceMessagePhoto(
-                        photo,
-                        vm.createCMessageEntity(messageText, date, 0, 2)
-                    )
-                    if (!r.isSuccessful) {
-                        throw SendMessageException()
-                    }
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw LoadImageException()
-                    message = vm.createCMessageEntity(
-                        messageText,
-                        date,
-                        r.headers["message_id"]!!.toInt(),
-                        2
-                    )
-                }
-                MESSAGE_WITH_AUDIO -> {
-                    val r = Server.sendConferenceMessageAudio(audio,
-                    vm.createCMessageEntity("AudioMessage", date, 0, 3))
-                    if (!r.isSuccessful) {
-                        throw SendMessageException()
-                    }
-                    if (r.headers["message_id"]?.toInt() == -1) {
-                        throw SendMessageException()
-                    }
-                    message = vm.createCMessageEntity("",
-                        date,
-                        r.headers["message_id"]!!.toInt(),
-                        3
-                    )
-                }
                 MESSAGE_WITH_TEXT -> {
-                     val r = Server.get(vm.generateURL(messageText, date))
-                     if (!r.isSuccessful) {
-                         throw SendMessageException()
-                     }
-                     val messageId = r.body!!.string().toInt()
-                     if (messageId == -1) {
-                         throw SendMessageException()
-                     }
-                     message = vm.createCMessageEntity(messageText, date, messageId, 1)
+                    Server.sendConferenceTextMessage(
+                        context = this,
+                        messageText,
+                        viewModel.conferenceID
+                    )
                 }
+                MESSAGE_WITH_PHOTO ->
+                    Server.sendConferenceMessageWithPhoto(
+                        context = this,
+                        addition!!.file,
+                        messageText,
+                        viewModel.conferenceID
+                    )
+                AUDIO_MESSAGE ->
+                    Server.sendConferenceAudioMessage(
+                        context = this,
+                        addition!!.file,
+                        viewModel.conferenceID
+                    )
+
                 MESSAGE_WITH_FILE -> {
-                    val r = Server.sendConferenceFile(file,
-                    vm.createCMessageEntity(file!!.name, date, 0,4))
-                    if (!r.isSuccessful)
-                        throw SendMessageException()
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw SendMessageException()
-                    message = vm.createCMessageEntity(
-                        file!!.name,
-                        date,
-                        r.headers["message_id"]!!.toInt(),
-                        4
+                    Server.sendConferenceMessageWithFile(
+                        context = this,
+                        addition!!,
+                        viewModel.conferenceID
                     )
                 }
             }
-            vm.updateMessages()
-            photo = null
-            audio = null
+            addition = null
+            messageType = MESSAGE_WITH_TEXT
+            if (messageType == MESSAGE_WITH_TEXT || messageType == MESSAGE_WITH_PHOTO) {
+                conference_message_et.setText("")
+            }
+
+            updateRecyclerView()
+
             withContext(Main) {
-                addFileConferenceIB.setImageResource(R.drawable.add)
-                addFileConferenceIB.isEnabled = true
+                conference_add_addition_ib.setImageResource(R.drawable.add)
+                conference_add_addition_ib.isEnabled = true
             }
         } catch (e: SendMessageException) {
-            vm.showToast("Ошибка отправки")
-        } catch (e: ConnectException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: SocketTimeoutException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: LoadImageException) {
-            vm.showToast("Не удалось отправить фотографию")
+            val sendingErrorSnackBar = Snackbar.make(
+                conference_messages_rv,
+                "Произошла ошибка",
+                Snackbar.LENGTH_SHORT
+            )
+            sendingErrorSnackBar.setAction("Повторить", this::onSendMessageButtonClick)
+            sendingErrorSnackBar.show()
         }
-        return message
+        conference_message_sending_pb.visibility = View.INVISIBLE
     }
 
     private fun loadPhoto() {
@@ -269,37 +246,37 @@ class ConferenceActivity : AppCompatActivity() {
     private fun loadFile() {
         val pickIntent = Intent(Intent.ACTION_PICK)
         pickIntent.type = "*/*"
-        startActivityForResult(pickIntent, FILE_LOAD)
+        startActivityForResult(pickIntent, FILE_LOADING)
     }
 
     private fun recordAudioMessage() {
         if (checkPermission()) {
-            val mr = getMediaRecorder()
+            val mediaRecorder = getMediaRecorder()
             val path =
                 "${Environment.getExternalStorageDirectory().absolutePath}/${Date().time}.3gp"
-            mr.setOutputFile(path)
+            mediaRecorder.setOutputFile(path)
             try {
-                mr.prepare()
-                mr.start()
+                mediaRecorder.prepare()
+                mediaRecorder.start()
                 setAudioRecordAnimation()
-                conferenceMessageET.isEnabled = false
-                addFileConferenceIB.isEnabled = false
-                enterMessageIB.setOnClickListener { v ->
+                conference_message_et.isEnabled = false
+                conference_add_addition_ib.isEnabled = false
+                conference_send_message_btn.setOnClickListener { v ->
                     GlobalScope.launch {
-                        mr.stop()
+                        mediaRecorder.stop()
                         val fileStream =
                             contentResolver.openInputStream(Uri.fromFile(File(path)) )
-                        audio = fileStream!!.readBytes()
-                        messageType = MESSAGE_WITH_AUDIO
+                        addition = Addition(fileStream!!.readBytes(), "audio_message")
+                        messageType = AUDIO_MESSAGE
                         withContext(Main) {
-                            conferenceMessageET.isEnabled = true
-                            conferenceMessageET.hint = "Введите сообщение..."
-                            conferenceMessageET.clearAnimation()
+                            conference_message_et.isEnabled = true
+                            conference_message_et.hint = "Введите сообщение..."
+                            conference_message_et.clearAnimation()
 
-                            addFileConferenceIB.isEnabled = true
+                            conference_add_addition_ib.isEnabled = true
 
-                            v.setOnClickListener(this@ConferenceActivity::onEnterMessageButtonClick)
-                            onEnterMessageButtonClick(v)
+                            v.setOnClickListener(this@ConferenceActivity::onSendMessageButtonClick)
+                            onSendMessageButtonClick(v)
                         }
                     }
                 }
@@ -310,25 +287,26 @@ class ConferenceActivity : AppCompatActivity() {
     }
 
     private fun getMediaRecorder(): MediaRecorder {
-        val mr = MediaRecorder()
-        mr.setAudioSource(MIC)
-        mr.setOutputFormat(THREE_GPP)
-        mr.setAudioEncoder(AMR_NB)
-        return mr
+        val mediaRecorder = MediaRecorder()
+        mediaRecorder.setAudioSource(MIC)
+        mediaRecorder.setOutputFormat(THREE_GPP)
+        mediaRecorder.setAudioEncoder(AMR_NB)
+        return mediaRecorder
     }
 
     private fun checkConferenceName() {
         GlobalScope.launch {
             try {
-                val response = Server.get("/conference/getConferenceName/?id=${vm.conferenceID}")
+                val response = Server.get("/conference/getConferenceName/?id=${viewModel.conferenceID}")
                 if (!response.isSuccessful) return@launch
                 val name = response.body!!.string()
                 if (name == "") return@launch
-                val conference = vm.getConference()
+                val conference = viewModel.getConference()
                 if (name != conference.name) {
                     conference.name = name
-                    vm.update(conference)
-                    vm.showToast("Изменено название конференции")
+                    viewModel.updateConferenceData(conference)
+                    conference_name_tv.text = name
+                    showToast("Изменено название конференции")
                 }
             } catch (e: SocketTimeoutException) {}
             catch (e: ConnectException) {}
@@ -336,12 +314,12 @@ class ConferenceActivity : AppCompatActivity() {
     }
 
     private fun setAudioRecordAnimation() {
-        val a = AnimationUtils.loadAnimation(
+        val animation = AnimationUtils.loadAnimation(
             this, R.anim.audio_recording_anim
         )
-        a.repeatMode = Animation.REVERSE
-        a.repeatCount = Animation.INFINITE
-        conferenceMessageET.startAnimation(a)
+        animation.repeatMode = Animation.REVERSE
+        animation.repeatCount = Animation.INFINITE
+        conference_message_et.startAnimation(animation)
     }
 
     private fun showPopupMenu(v: View) {
@@ -379,20 +357,60 @@ class ConferenceActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(this, arrayOf(WRITE_EXTERNAL_STORAGE, RECORD_AUDIO), 1)
     }
 
-    companion object {
-        const val PHOTOGRAPHY_LOAD = 0
-        const val FILE_LOAD = 5
-
-        const val MESSAGE_WITH_TEXT = 1
-        const val MESSAGE_WITH_PHOTO = 2
-        const val MESSAGE_WITH_AUDIO = 3
-        const val MESSAGE_WITH_FILE = 4
+    private suspend fun updateRecyclerView() {
+        val messages: CMessageList = Server.getNewConferenceMessages(
+            viewModel.conferenceID,
+            viewModel.getLastMessageID(),
+            applicationContext
+        )
+        messages.list?: return
+        messages.list.forEach { viewModel.saveMessageInDataBase(it) }
+        (conference_messages_rv.adapter as ConferenceRecyclerViewAdapter).messages =
+            viewModel.getMessages()
+        withContext(Main) {
+            (conference_messages_rv.adapter as ConferenceRecyclerViewAdapter).notifyDataSetChanged()
+        }
     }
+
+    private fun callbackForPhoto(id: Int) {
+        val intent = Intent(this, PhotoReviewerActivity::class.java)
+        intent.putExtra("photo_id", id)
+        intent.putExtra("is_conference", true)
+        startActivity(intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun callbackForFile(id: Int, name: String) {
+        GlobalScope.launch {
+            try {
+                val response: Response = Server.get("/conference/getFile/?id=$id")
+
+                response.body!!.byteStream().use {
+                    Files.write(
+                        Paths.get(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)!!.path +
+                                    "/$name"
+                        ), it.readBytes()
+                    )
+                }
+                showToast("Файл сохранен на устройство")
+            } catch (e: SocketTimeoutException) {
+                showToast("Возникла ошибка при скачивании")
+            } catch (e: ConnectException) {
+                showToast("Возникла ошибка при скачивании")
+            } catch (e: SocketException) {
+                showToast("Возникла ошибка при скачивании")
+            }
+        }
+    }
+
+    suspend fun showToast(text: String) =
+        withContext(Main) { Toast.makeText(this@ConferenceActivity, text, Toast.LENGTH_LONG).show() }
 
     inner class NewNameBroadcastReceiver: BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            vm.viewModelScope.launch {
-                conferenceNameTV.text = vm.getConference().name
+            viewModel.viewModelScope.launch {
+                conference_name_tv.text = viewModel.getConference().name
             }
         }
     }

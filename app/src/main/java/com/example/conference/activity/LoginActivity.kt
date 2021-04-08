@@ -52,7 +52,7 @@ class LoginActivity : AppCompatActivity() {
                     } else {
                         GlobalScope.launch {
                             try {
-                                val r = Server.get(String.format("/user/info/?id=%s", id))
+                                val r = Server.get("/user/info/?id=$id")
                                 if (!r.isSuccessful) throw LoginException()
                                 val info = Gson().fromJson(r.body?.string(), UserInfo::class.java)
                                 vm.saveUserInfo(info)

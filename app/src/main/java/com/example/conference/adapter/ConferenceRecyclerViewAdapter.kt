@@ -28,7 +28,6 @@ import kotlinx.android.synthetic.main.your_message_item_view.view.userMessageTim
 import kotlinx.android.synthetic.main.your_message_item_view_audio_message.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_photo.view.*
-import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.recyclerview.widget.RecyclerView.Adapter as RVAdapter
@@ -83,7 +82,7 @@ class ConferenceRecyclerViewAdapter(
                     .inflate(R.layout.message_item_view_with_file, parent, false)
                 WFMessageViewHolder(itemView)
             }
-            else -> throw IllegalArgumentException()
+            else -> throw IllegalArgumentException(viewType.toString())
         }
     }
 
@@ -126,7 +125,7 @@ class ConferenceRecyclerViewAdapter(
                     2 -> 1
                     3 -> 2
                     4 -> 6
-                    else -> -1
+                    else -> throw IllegalStateException(messages[position].text)
                 }
 
             SenderEnum.NOT_USER.ordinal ->

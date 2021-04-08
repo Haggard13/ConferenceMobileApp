@@ -5,8 +5,12 @@ apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
     buildToolsVersion "29.0.3"
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
     compileOptions {
         sourceCompatibility 1.8
@@ -16,7 +20,7 @@ android {
     defaultConfig {
         applicationId "com.example.conference"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
 
@@ -57,16 +61,18 @@ dependencies {
     //lifecycle
     implementation "androidx.lifecycle:lifecycle-extensions:2.2.0"
     //noinspection LifecycleAnnotationProcessorWithJava8
-    kapt "androidx.lifecycle:lifecycle-compiler:2.3.0"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.0"
+    kapt "androidx.lifecycle:lifecycle-compiler:2.3.1"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
     //firebase
     implementation 'com.google.firebase:firebase-analytics:18.0.2'
     implementation 'com.google.firebase:firebase-auth:20.0.3'
     implementation 'com.google.firebase:firebase-database:19.7.0'
-    implementation 'com.google.firebase:firebase-firestore:22.1.1'
+    implementation 'com.google.firebase:firebase-firestore:22.1.2'
+    implementation 'com.google.firebase:firebase-messaging:21.0.1'
     //server
     implementation group: 'com.squareup.okhttp3', name: 'okhttp', version: '4.10.0-RC1'
     implementation group: 'com.squareup.picasso', name: 'picasso', version: '2.8'
     //webrtc
     implementation group: 'fi.vtt.nubomedia', name: 'kurento-room-client-android', version: '1.1.2'
+    implementation group: 'fi.vtt.nubomedia', name: 'webrtcpeer-android', version: '1.1.2'
 }

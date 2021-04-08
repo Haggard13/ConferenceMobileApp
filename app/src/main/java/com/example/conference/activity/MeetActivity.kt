@@ -9,10 +9,14 @@ import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
 import com.example.conference.R
 import com.example.conference.kurento.RoomListenerImpl
+import com.example.conference.kurento.WebRTCApp
 import kotlinx.android.synthetic.main.activity_meet.*
+import org.webrtc.EglBase
+
 
 class MeetActivity: AppCompatActivity() {
-    private val roomListener: RoomListenerImpl = RoomListenerImpl(0,"email", this)
+    var conferenceID: Int = 0
+        private set
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,6 +25,17 @@ class MeetActivity: AppCompatActivity() {
         membersFragment.view!!.visibility = INVISIBLE
         chatFragment.view!!.visibility = INVISIBLE
         roomFragment.view!!.visibility = INVISIBLE
+
+        conferenceID = intent.extras?.getInt("conferenceID")!!
+
+        broadcastSVR.init(EglBase.create().eglBaseContext, null)
+        broadcastSVR.keepScreenOn = true
+        val roomListener = RoomListenerImpl(conferenceID, "email", this)
+        val webRTCApp = WebRTCApp(this, roomListener.kurentoRoomAPI)
+    }
+
+    override fun onStop() {
+        super.onStop()
     }
 
     fun onMembersClick(v: View) {

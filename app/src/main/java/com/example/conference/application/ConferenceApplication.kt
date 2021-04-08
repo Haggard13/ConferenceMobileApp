@@ -21,7 +21,7 @@ class ConferenceApplication: Application(), Application.ActivityLifecycleCallbac
             dialogue_id = activity.vm.dialogueID
         }
         else if (activity is ConferenceActivity) {
-            conference_id = activity.vm.conferenceID
+            conference_id = activity.viewModel.conferenceID
         }
     }
 

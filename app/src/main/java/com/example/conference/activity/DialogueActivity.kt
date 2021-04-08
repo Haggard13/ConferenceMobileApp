@@ -34,7 +34,7 @@ import java.lang.IllegalStateException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.*
-import com.example.conference.file.File as MyFile
+import com.example.conference.file.Addition as MyFile
 
 class DialogueActivity : AppCompatActivity() {
     lateinit var vm: DialogueViewModel
@@ -52,15 +52,15 @@ class DialogueActivity : AppCompatActivity() {
         vm.dialogueID = intent.getIntExtra("dialogue_id", -1)
 
         vm.viewModelScope.launch {
-            companionNameTV.text = vm.getDialogue().second_user_name
+            companion_name_tv.text = vm.getDialogue().second_user_name
             vm.initMessages()
             vm.initAdapter(this@DialogueActivity)
-            dialogueRV.layoutManager = LinearLayoutManager(this@DialogueActivity, LinearLayoutManager.VERTICAL, true)
-            dialogueRV.adapter = vm.adapter
+            dialogue_messages_rv.layoutManager = LinearLayoutManager(this@DialogueActivity, LinearLayoutManager.VERTICAL, true)
+            dialogue_messages_rv.adapter = vm.adapter
         }
 
-        dialogueAddFileIB.setOnClickListener(this::onAddFileClick)
-        dialBackIB.setOnClickListener { finish() }
+        dialogue_add_file_ib.setOnClickListener(this::onAddFileClick)
+        dialogue_back_ib.setOnClickListener { finish() }
     }
 
     override fun onResume() {
@@ -92,8 +92,8 @@ class DialogueActivity : AppCompatActivity() {
                     val fileStream = contentResolver.openInputStream(imageUri)
                     photo = fileStream!!.readBytes()
                     messageType = MESSAGE_WITH_PHOTO
-                    dialogueAddFileIB.setImageResource(R.drawable.photo)
-                    dialogueAddFileIB.isEnabled = false
+                    dialogue_add_file_ib.setImageResource(R.drawable.photo)
+                    dialogue_add_file_ib.isEnabled = false
                 } catch (e: IOException) {
                     vm.showToast("Не удалось загрузить изображение")
                 }
@@ -105,8 +105,8 @@ class DialogueActivity : AppCompatActivity() {
                     val fileStream = contentResolver.openInputStream(fileUri)
                     file = MyFile(fileStream!!.readBytes(), File(fileUri.path!!).name)
                     messageType = MESSAGE_WITH_FILE
-                    dialogueAddFileIB.setImageResource(R.drawable.file)
-                    dialogueAddFileIB.isEnabled = false
+                    dialogue_add_file_ib.setImageResource(R.drawable.file)
+                    dialogue_add_file_ib.isEnabled = false
                 } catch (e: IOException) {
                     vm.showToast("Не удалось загрузить файл")
                 }
@@ -117,7 +117,7 @@ class DialogueActivity : AppCompatActivity() {
     private fun onAddFileClick(v: View) = showPopupMenu(v)
 
     fun onEnterMessageButtonClick(v: View) {
-        var messageText = dialogueMessageET.text.toString()
+        var messageText = dialogue_message_et.text.toString()
         if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO
             && messageType != MESSAGE_WITH_FILE)
             return
@@ -133,7 +133,7 @@ class DialogueActivity : AppCompatActivity() {
                 vm.updateRV()
                 withContext(Dispatchers.Main) {
                     if (messageType != MESSAGE_WITH_AUDIO && messageType != MESSAGE_WITH_FILE)
-                        dialogueMessageET.setText("")
+                        dialogue_message_et.setText("")
                 }
                 messageType = MESSAGE_WITH_TEXT
             } else if (messageType == MESSAGE_WITH_AUDIO || messageType == MESSAGE_WITH_FILE) {
@@ -207,8 +207,8 @@ class DialogueActivity : AppCompatActivity() {
             photo = null
             audio = null
             withContext(Dispatchers.Main) {
-                dialogueAddFileIB.setImageResource(R.drawable.add)
-                dialogueAddFileIB.isEnabled = true
+                dialogue_add_file_ib.setImageResource(R.drawable.add)
+                dialogue_add_file_ib.isEnabled = true
             }
         } catch (e: SendMessageException) {
             vm.showToast("Ошибка отправки")
@@ -244,9 +244,9 @@ class DialogueActivity : AppCompatActivity() {
                 mr.prepare()
                 mr.start()
                 setAudioRecordAnimation()
-                dialogueMessageET.isEnabled = false
-                dialogueAddFileIB.isEnabled = false
-                dialogueEnterMessageBtn.setOnClickListener { v ->
+                dialogue_message_et.isEnabled = false
+                dialogue_add_file_ib.isEnabled = false
+                dialogue_send_message_btn.setOnClickListener { v ->
                     GlobalScope.launch {
                         mr.stop()
                         val fileStream =
@@ -254,13 +254,13 @@ class DialogueActivity : AppCompatActivity() {
                         audio = fileStream!!.readBytes()
                         messageType = MESSAGE_WITH_AUDIO
                         withContext(Dispatchers.Main) {
-                            with(dialogueMessageET) {
+                            with(dialogue_message_et) {
                                 isEnabled = true
                                 hint = "Введите сообщение..."
                                 clearAnimation()
                             }
 
-                            dialogueAddFileIB.isEnabled = true
+                            dialogue_add_file_ib.isEnabled = true
 
                             v.setOnClickListener(this@DialogueActivity::onEnterMessageButtonClick)
                             onEnterMessageButtonClick(v)
@@ -287,7 +287,7 @@ class DialogueActivity : AppCompatActivity() {
         )
         a.repeatMode = Animation.REVERSE
         a.repeatCount = Animation.INFINITE
-        dialogueMessageET.startAnimation(a)
+        dialogue_message_et.startAnimation(a)
     }
 
     private fun checkPermission() =

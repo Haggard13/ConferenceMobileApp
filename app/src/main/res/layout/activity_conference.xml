@@ -12,13 +12,13 @@
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:background="#FFFFFF"
-        android:elevation="2dp"
+        android:elevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/conferenceNameTV"
+            android:id="@+id/conference_name_tv"
             android:layout_width="0dp"
             android:layout_height="40dp"
             android:background="#FFFFFF"
@@ -30,12 +30,12 @@
             android:textColor="@color/colorText"
             android:textSize="24sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/startConferenceIB"
-            app:layout_constraintStart_toEndOf="@+id/confBackIB"
+            app:layout_constraintEnd_toStartOf="@+id/open_meet_ib"
+            app:layout_constraintStart_toEndOf="@+id/confenrence_back_ib"
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/confBackIB"
+            android:id="@+id/confenrence_back_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
@@ -47,7 +47,7 @@
             app:srcCompat="?attr/actionModeCloseDrawable" />
 
         <ImageButton
-            android:id="@+id/conferenceSettingsIB"
+            android:id="@+id/conference_settings_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
@@ -60,7 +60,7 @@
             app:srcCompat="@drawable/gear" />
 
         <ImageView
-            android:id="@+id/resultsCardIB"
+            android:id="@+id/open_result_cards_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="#FFFFFF"
@@ -68,12 +68,12 @@
             android:onClick="onResultCardClick"
             android:padding="8dp"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toStartOf="@+id/conferenceSettingsIB"
+            app:layout_constraintEnd_toStartOf="@+id/conference_settings_ib"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/cards" />
 
         <ImageButton
-            android:id="@+id/startConferenceIB"
+            android:id="@+id/open_meet_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="#FFF"
@@ -81,13 +81,13 @@
             android:onClick="onStartConferenceClick"
             android:padding="8dp"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toStartOf="@+id/resultsCardIB"
+            app:layout_constraintEnd_toStartOf="@+id/open_result_cards_ib"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/video_broadcast_meet" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/conferenceRV"
+        android:id="@+id/conference_messages_rv"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:scrollbars="vertical"
@@ -111,7 +111,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <ImageButton
-            android:id="@+id/addFileConferenceIB"
+            android:id="@+id/conference_add_addition_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
@@ -124,7 +124,7 @@
             app:srcCompat="@drawable/add" />
 
         <EditText
-            android:id="@+id/conferenceMessageET"
+            android:id="@+id/conference_message_et"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="5dp"
@@ -142,23 +142,34 @@
             android:paddingBottom="10dp"
             android:textSize="18sp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/enterMessageIB"
-            app:layout_constraintStart_toEndOf="@+id/addFileConferenceIB" />
+            app:layout_constraintEnd_toStartOf="@+id/conference_send_message_btn"
+            app:layout_constraintStart_toEndOf="@+id/conference_add_addition_ib" />
 
         <ImageButton
-            android:id="@+id/enterMessageIB"
+            android:id="@+id/conference_send_message_btn"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_background"
             android:contentDescription="@string/send"
             android:elevation="1dp"
-            android:onClick="onEnterMessageButtonClick"
+            android:onClick="onSendMessageButtonClick"
             android:paddingStart="3dp"
             android:paddingEnd="5dp"
             android:scaleType="fitCenter"
             android:src="@drawable/paper_planes"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/conference_message_sending_pb"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="@id/conference_message_et"
+            app:layout_constraintTop_toTopOf="@id/conference_message_et" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -16,6 +16,8 @@
             android:id="@+id/constraintLayout5"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:elevation="10dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -36,7 +38,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
-                android:id="@+id/chatBackIB"
+                android:id="@+id/meet_chat_back_ib"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/button_bottom_navigation_view_background"
@@ -48,7 +50,7 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/chatMeetRV"
+            android:id="@+id/chat_meet_rv"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="@color/colorBackground"
@@ -56,6 +58,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/constraintLayout5"
+            app:reverseLayout="true"
+            app:stackFromEnd="true"
             tools:listitem="@layout/message_item_view" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -63,13 +67,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
+            android:elevation="10dp"
             android:padding="5dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent">
 
             <ImageButton
-                android:id="@+id/addFileChatIB"
+                android:id="@+id/meet_chat_add_addition_ib"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/button_bottom_navigation_view_background"
@@ -81,7 +86,7 @@
                 app:srcCompat="@drawable/add" />
 
             <EditText
-                android:id="@+id/chatMessageET"
+                android:id="@+id/chat_message_et"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="5dp"
@@ -99,11 +104,11 @@
                 android:paddingBottom="10dp"
                 android:textSize="18sp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/enterMessageChatBtn"
-                app:layout_constraintStart_toEndOf="@+id/addFileChatIB" />
+                app:layout_constraintEnd_toStartOf="@+id/meet_chat_send_message_btn"
+                app:layout_constraintStart_toEndOf="@+id/meet_chat_add_addition_ib" />
 
             <ImageButton
-                android:id="@+id/enterMessageChatBtn"
+                android:id="@+id/meet_chat_send_message_btn"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:background="@drawable/button_background"
@@ -114,6 +119,17 @@
                 android:src="@drawable/paper_planes"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <ProgressBar
+                android:id="@+id/meet_chat_message_sending_pb"
+                style="?android:attr/progressBarStyle"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="4dp"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="@+id/chat_message_et"
+                app:layout_constraintTop_toTopOf="@+id/chat_message_et" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

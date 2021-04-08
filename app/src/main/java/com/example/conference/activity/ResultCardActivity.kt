@@ -38,7 +38,7 @@ class ResultCardActivity : AppCompatActivity() {
                 val opinionCards = Gson().fromJson(
                     Server.get(
                         "/opinions/getOpinions/?result_id=" +
-                                "${intent.getIntExtra("result_id", 0)}"//fixme
+                                "${intent.getIntExtra("result_id", 0)}"
                     ).body!!.string(), OpinionCards::class.java
                 )
                 withContext(Main) {
@@ -90,7 +90,7 @@ class ResultCardActivity : AppCompatActivity() {
                 val opinionCards = Gson().fromJson(
                     Server.get(
                         "/opinions/getOpinions/?result_id=" +
-                                "${intent.getIntExtra("result_id", 0)}"//fixme
+                                "${intent.getIntExtra("result_id", 0)}"
                     ).body!!.string(), OpinionCards::class.java
                 )
                 withContext(Main) {

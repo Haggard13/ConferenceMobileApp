@@ -12,12 +12,12 @@ class RoomListenerImpl(
     private val userEmail: String,
     private val context: Context
 ) : RoomListener {
-    private var executor: LooperExecutor = LooperExecutor()
+    private var executor = LooperExecutor()
     var kurentoRoomAPI: KurentoRoomAPI
 
     init {
         executor.requestStart()
-        val wsRoomUri = "wss://192.168.0.103:8888/room"
+        val wsRoomUri = "ws://192.168.0.105:8082/call"
         kurentoRoomAPI = KurentoRoomAPI(executor, wsRoomUri, this)
         kurentoRoomAPI.connectWebSocket()
     }
@@ -35,8 +35,8 @@ class RoomListenerImpl(
     }
 
     override fun onRoomConnected() {
-        kurentoRoomAPI.sendJoinRoom(userEmail, conferenceID.toString(), true, 123)
         Toast.makeText(context, "connected", LENGTH_LONG).show()
+        kurentoRoomAPI.sendJoinRoom(userEmail, conferenceID.toString(), true, 1)
     }
 
     override fun onRoomDisconnected() {
