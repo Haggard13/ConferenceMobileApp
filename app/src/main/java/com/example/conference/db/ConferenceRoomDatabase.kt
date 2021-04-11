@@ -41,7 +41,11 @@ abstract class ConferenceRoomDatabase: RoomDatabase() {
 
             synchronized(this) {
 
-                val instance = Room.databaseBuilder(context, ConferenceRoomDatabase::class.java, "conference_database").build()
+                val instance = Room.databaseBuilder(
+                    context,
+                    ConferenceRoomDatabase::class.java,
+                    "conference_database"
+                ).build()
                 INSTANCE = instance
                 return instance
             }

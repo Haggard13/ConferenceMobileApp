@@ -28,7 +28,7 @@
                 app:cardCornerRadius="100dp">
 
                 <ImageView
-                    android:id="@+id/contactAvatarIV"
+                    android:id="@+id/contact_avatar_iv"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
                     tools:srcCompat="@tools:sample/avatars" />
@@ -41,6 +41,7 @@
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
+                    android:layout_marginStart="10dp"
                     android:layout_marginEnd="5dp"
                     android:orientation="vertical"
                     app:layout_constraintBottom_toBottomOf="parent"
@@ -48,35 +49,72 @@
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <TextView
-                        android:id="@+id/contactSurnameTV"
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="3dp"
-                        android:text="TextView"
-                        android:textColor="@color/colorText"
-                        android:textSize="16sp"
-                        tools:text="Имя" />
+                        android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/contactNameTV"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:padding="3dp"
-                        android:text="TextView"
-                        android:textColor="@color/colorText"
-                        android:textSize="16sp"
-                        tools:text="Фамилия" />
+                        <TextView
+                            android:id="@+id/textView22"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Фамилия:" />
 
-                    <TextView
-                        android:id="@+id/contactEmailTV"
+                        <TextView
+                            android:id="@+id/contact_surname_tv"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="3dp"
+                            android:text="TextView"
+                            android:textColor="@color/colorText"
+                            android:textSize="16sp"
+                            tools:text="Фамилия" />
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:padding="3dp"
-                        android:text="TextView"
-                        android:textColor="@color/colorText"
-                        android:textSize="16sp"
-                        tools:text="Email" />
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/textView23"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Имя:" />
+
+                        <TextView
+                            android:id="@+id/contact_name_tv"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="3dp"
+                            android:text="TextView"
+                            android:textColor="@color/colorText"
+                            android:textSize="16sp"
+                            tools:text="Имя" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/textView24"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="E-Mail:" />
+
+                        <TextView
+                            android:id="@+id/contact_email_tv"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:padding="3dp"
+                            android:text="TextView"
+                            android:textColor="@color/colorText"
+                            android:textSize="16sp"
+                            tools:text="Email" />
+                    </LinearLayout>
+
                 </LinearLayout>
 
                 <ImageView

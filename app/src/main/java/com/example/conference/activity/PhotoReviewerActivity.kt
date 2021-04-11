@@ -4,7 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import com.example.conference.R
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import kotlinx.android.synthetic.main.activity_photo_reviewer.*
 
 class PhotoReviewerActivity : AppCompatActivity() {

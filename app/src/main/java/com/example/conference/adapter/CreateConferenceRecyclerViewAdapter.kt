@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.entity.ContactEntity
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.contact_item_view.view.*
 
@@ -31,10 +31,10 @@ class CreateConferenceRecyclerViewAdapter(
     }
 
     inner class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView){
-        var name: TextView = itemView.contactNameTV
-        var surname: TextView = itemView.contactSurnameTV
-        var email: TextView = itemView.contactEmailTV
-        var avatar: ImageView = itemView.contactAvatarIV
+        var name: TextView = itemView.contact_name_tv
+        var surname: TextView = itemView.contact_surname_tv
+        var email: TextView = itemView.contact_email_tv
+        var avatar: ImageView = itemView.contact_avatar_iv
         fun bind(c: ContactEntity) {
             name.text = c.name
             surname.text = c.surname

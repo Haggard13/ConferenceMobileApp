@@ -1,8 +1,8 @@
-package com.example.conference.service
+package com.example.conference.server
 
 import android.content.Context
-import com.example.conference.AccountData
-import com.example.conference.MessageType
+import com.example.conference.account.Account
+import com.example.conference.db.data.MessageType
 import com.example.conference.db.data.SenderEnum
 import com.example.conference.db.entity.DMessageEntity
 import com.example.conference.exception.SendMessageException
@@ -75,131 +75,6 @@ object Server {
             1
     }
 
-    fun sendConferenceTextMessage(context: Context, messageText: String, conferenceID: Int) {
-        val accountData = AccountData(context)
-
-        val message = ConferenceMessageWithoutID(
-            messageText,
-            Date().time,
-            accountData.userID,
-            conferenceID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
-            SenderEnum.USER.ordinal,
-            MessageType.MESSAGE_WITH_TEXT.ordinal + 1
-        )
-
-        val request = Request.Builder()
-            .url("$baseURL/conference/send_message")
-            .post(
-                Gson()
-                    .toJson(message)
-                    .toRequestBody("application/json; charset=utf-8".toMediaType())
-            ).build()
-
-        val client = OkHttpClient.Builder().build()
-
-        try {
-            val response = client.newCall(request).execute()
-            if (response.headers["message_id"]?.toInt() ?: -1 == -1) {
-                throw SendMessageException()
-            }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
-        }
-    }
-
-    fun sendConferenceMessageWithPhoto(
-        context: Context,
-        file: ByteArray?,
-        messageText: String,
-        conferenceID: Int
-    ) {
-        val accountData = AccountData(context)
-        val message = ConferenceMessageWithoutID(
-            messageText,
-            Date().time,
-            accountData.userID,
-            conferenceID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
-            SenderEnum.USER.ordinal,
-            MessageType.MESSAGE_WITH_TEXT.ordinal + 1
-        )
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "file.png",
-                file!!.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .addFormDataPart("message", Gson().toJson(message))
-            .build()
-
-        val request = Request.Builder()
-            .url("$baseURL/conference/send_message_with_photo")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        try {
-            val response: Response = client.newCall(request).execute()
-            if (response.headers["message_id"]?.toInt() ?: -1 == -1) {
-                throw SendMessageException()
-            }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
-        }
-    }
-
-    fun sendConferenceAudioMessage(
-        context: Context,
-        file: ByteArray?,
-        conferenceID: Int
-    ) {
-        val accountData = AccountData(context)
-        val message = ConferenceMessageWithoutID(
-            "Аудиосообщение",
-            Date().time,
-            accountData.userID,
-            conferenceID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
-            SenderEnum.USER.ordinal,
-            MessageType.MESSAGE_WITH_TEXT.ordinal + 1
-        )
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "file.3gp",
-                file!!.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .addFormDataPart("message", Gson().toJson(message))
-            .build()
-
-        val request = Request.Builder()
-            .url("$baseURL/conference/send_audio_message")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        try {
-            val response = client.newCall(request).execute()
-            if (response.headers["message_id"]?.toInt() ?: -1 == -1) {
-                throw SendMessageException()
-            }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
-        }
-    }
-
     fun sendDialogueMessagePhoto(
         file: ByteArray?,
         DMessageEntity: DMessageEntity
@@ -225,50 +100,6 @@ object Server {
             .build()
         val client = OkHttpClient.Builder().build()
         return client.newCall(request).execute()
-    }
-
-    fun sendConferenceMessageWithFile(
-        context: Context,
-        addition: Addition,
-        conferenceID: Int
-    ) {
-        val accountData = AccountData(context)
-        val message = ConferenceMessageWithoutID(
-            addition.name,
-            Date().time,
-            accountData.userID,
-            conferenceID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
-            SenderEnum.USER.ordinal,
-            MessageType.MESSAGE_WITH_TEXT.ordinal + 1
-        )
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , addition.name,
-                addition.file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, addition.file.size)
-            )
-            .addFormDataPart("message", Gson().toJson(message))
-            .build()
-
-        val request = Request.Builder()
-            .url(
-                "$baseURL/conference/send_message_with_file")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        try {
-            val response: Response = client.newCall(request).execute()
-            if (response.headers["message_id"]?.toInt() ?: -1 == -1) {
-                throw SendMessageException()
-            }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
-        }
     }
 
     fun sendDialogueMessageAudio(
@@ -331,7 +162,7 @@ object Server {
         context: Context
     ) {
 
-        val accountData = AccountData(context)
+        val accountData = Account(context)
 
         val message = ConferenceMessageWithoutID(
             messageText,
@@ -341,7 +172,7 @@ object Server {
             accountData.userName?: "",
             accountData.userSurname?: "",
             SenderEnum.USER.ordinal,
-            MessageType.MESSAGE_WITH_TEXT.ordinal + 1
+            MessageType.TEXT_MESSAGE.type
         )
 
         val request = Request.Builder()
@@ -393,28 +224,7 @@ object Server {
             val response: Response = get("/meet_chat/get_messages/?" +
                     "conference_id=$conferenceID" +
                     "&last_message_id=$lastMessagesID" +
-                    "&user_id=${AccountData(context).userID}")
-            return Gson().fromJson(
-                response.body?.string(),
-                CMessageList::class.java
-            ) ?: CMessageList()
-        } catch (e: SocketException) {
-        } catch (e: ConnectException) {
-        } catch (e: SocketTimeoutException) {
-        }
-        return CMessageList()
-    }
-
-    fun getNewConferenceMessages(
-        conferenceID: Int,
-        lastMessageID: Int,
-        context: Context
-    ): CMessageList {
-        try {
-            val response: Response = get("/conference/getNewMessages/?" +
-                    "conference_id=$conferenceID" +
-                    "&last_message_id=$lastMessageID" +
-                    "&user_id=${AccountData(context).userID}")
+                    "&user_id=${Account(context).userID}")
             return Gson().fromJson(
                 response.body?.string(),
                 CMessageList::class.java

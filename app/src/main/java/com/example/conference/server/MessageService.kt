@@ -1,4 +1,4 @@
-package com.example.conference.service
+package com.example.conference.server
 
 import android.app.Notification
 import android.app.NotificationChannel

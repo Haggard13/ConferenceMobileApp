@@ -6,7 +6,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.contact_item_view.view.*
 
@@ -36,10 +36,10 @@ class ConferenceSettingsRecyclerViewAdapter(
                 .fit()
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
-                .into(itemView.contactAvatarIV)
-            itemView.contactNameTV.text = conferenceMembers[p].name
-            itemView.contactSurnameTV.text = conferenceMembers[p].surname
-            itemView.contactEmailTV.text = conferenceMembers[p].email
+                .into(itemView.contact_avatar_iv)
+            itemView.contact_name_tv.text = conferenceMembers[p].name
+            itemView.contact_surname_tv.text = conferenceMembers[p].surname
+            itemView.contact_email_tv.text = conferenceMembers[p].email
             if (conferenceMembers[p].status == 0)
                 itemView.contactChoseImg.visibility = View.INVISIBLE
             else

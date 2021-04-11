@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.json.OpinionCards
 import com.example.conference.R
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.opinion_item_view.view.*
 

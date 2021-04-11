@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.json.OpinionCards
 import com.example.conference.R
 import com.example.conference.adapter.ResultCardRecyclerViewAdapter
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.ResultCardViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_result_card.*

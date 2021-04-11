@@ -1,8 +1,8 @@
-package com.example.conference
+package com.example.conference.account
 
 import android.content.Context
 
-class AccountData(private val context: Context) {
+class Account(private val context: Context) {
     private val sharedPreferences = context.getSharedPreferences(
         "user_info",
         Context.MODE_PRIVATE

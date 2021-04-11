@@ -18,7 +18,7 @@ import com.example.conference.db.entity.DMessageEntity
 import com.example.conference.db.entity.DialogueEntity
 import com.example.conference.exception.MessageUpdateException
 import com.example.conference.json.DMessageList
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope

@@ -11,14 +11,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.conference.MessageType.MESSAGE_WITH_PHOTO
-import com.example.conference.MessageType.MESSAGE_WITH_TEXT
+import com.example.conference.db.data.MessageType.MESSAGE_WITH_PHOTO
+import com.example.conference.db.data.MessageType.TEXT_MESSAGE
 import com.example.conference.R
 import com.example.conference.activity.MeetActivity
 import com.example.conference.adapter.MeetChatRecyclerViewAdapter
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.MeetChatViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.fragment_meet_chat.*
@@ -36,7 +36,7 @@ class MeetChatFragment : Fragment() {
 
     private lateinit var viewModel: MeetChatViewModel
     private var checkingNewMessageIsPossible = false
-    private var messageType = MESSAGE_WITH_TEXT
+    private var messageType = TEXT_MESSAGE
     private lateinit var addition: Addition
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -108,7 +108,7 @@ class MeetChatFragment : Fragment() {
 
         meet_chat_message_sending_pb.visibility = View.VISIBLE
         when (messageType) {
-            MESSAGE_WITH_TEXT -> sendTextMessage()
+            TEXT_MESSAGE -> sendTextMessage()
             MESSAGE_WITH_PHOTO -> sendMessageWithPhoto()
             else -> throw IllegalStateException("Message type out of permissible values")
         }

@@ -10,7 +10,7 @@ import com.example.conference.adapter.CreateDialogueRecyclerViewAdapter
 import com.example.conference.db.ConferenceRoomDatabase
 import com.example.conference.exception.CreateDialogueException
 import com.example.conference.json.Dialogue
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.CreateDialogueViewModel
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_create_dialogue.*

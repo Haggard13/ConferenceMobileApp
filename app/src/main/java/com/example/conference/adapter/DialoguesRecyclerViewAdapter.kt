@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.entity.DMessageMinimal
 import com.example.conference.db.entity.DialogueEntity
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.group_message_item_view.view.*
 import java.text.SimpleDateFormat

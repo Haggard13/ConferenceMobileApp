@@ -19,7 +19,11 @@ class ConferenceViewModel(val app: Application) : AndroidViewModel(app) {
 
     suspend fun getConference(): ConferenceEntity = conferenceDao.getConference(conferenceID)[0]
 
-    suspend fun getLastMessageID() = cMessageDao.getLastMessageID(conferenceID)
+    suspend fun getLastMessageID() =
+        if (cMessageDao.getMessagesCount(conferenceID) != 0)
+            cMessageDao.getLastMessageID(conferenceID)
+        else
+            0
 
     suspend fun updateConferenceData(c: ConferenceEntity) = conferenceDao.update(c)
 

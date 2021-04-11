@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
 import com.example.conference.db.data.SenderEnum
 import com.example.conference.json.CMessageList
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.message_item_view.view.*
 import kotlinx.android.synthetic.main.your_message_item_view.view.*

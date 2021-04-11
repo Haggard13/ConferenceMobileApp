@@ -16,7 +16,7 @@ import com.example.conference.adapter.ConferenceSettingsRecyclerViewAdapter
 import com.example.conference.exception.*
 import com.example.conference.json.ConferenceMembersList
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.ConferenceSettingsViewModel
 import com.google.gson.Gson
 import com.squareup.picasso.Picasso

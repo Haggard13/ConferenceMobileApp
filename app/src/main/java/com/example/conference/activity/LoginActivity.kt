@@ -8,7 +8,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.conference.R
 import com.example.conference.exception.LoginException
 import com.example.conference.json.UserInfo
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.LoginViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.gson.Gson

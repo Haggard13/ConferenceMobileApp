@@ -1,4 +1,4 @@
 package com.example.conference.exception
 
-class GetUserInfoException: Exception() {
+class UserNotFoundException: Exception() {
 }

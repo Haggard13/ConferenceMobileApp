@@ -27,15 +27,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.conference.MessageType.*
 import com.example.conference.R
 import com.example.conference.adapter.ConferenceRecyclerViewAdapter
 import com.example.conference.application.ConferenceApplication
+import com.example.conference.db.data.MessageType.*
+import com.example.conference.db.entity.CMessageEntity
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
-import com.example.conference.json.CMessageList
-import com.example.conference.service.Server
+import com.example.conference.server.conferencemessaging.ConferenceMessageProvider
+import com.example.conference.server.conferencemessaging.ConferenceMessageSender
+import com.example.conference.server.Server
 import com.example.conference.vm.ConferenceViewModel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_conference.*
@@ -51,6 +53,7 @@ import java.net.SocketTimeoutException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import kotlin.collections.ArrayList
 
 class ConferenceActivity : AppCompatActivity() {
     private companion object {
@@ -58,11 +61,14 @@ class ConferenceActivity : AppCompatActivity() {
         const val FILE_LOADING = 1
     }
 
+    private val messageSender = ConferenceMessageSender()
+    private val messageProvider = ConferenceMessageProvider()
     private var checkingNewMessagesIsPossible = false
     private var addition: Addition? = null
-    private var messageType = MESSAGE_WITH_TEXT
+    private var messageType = TEXT_MESSAGE
     private var adapterIsInitialized = false
     lateinit var viewModel: ConferenceViewModel
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,20 +79,31 @@ class ConferenceActivity : AppCompatActivity() {
 
         checkConferenceName()
 
-        viewModel.viewModelScope.launch {
-            conference_name_tv.text = viewModel.getConference().name
-            conference_messages_rv.layoutManager = LinearLayoutManager(
-                this@ConferenceActivity,
-                LinearLayoutManager.VERTICAL,
-                true
-            )
+        GlobalScope.launch {
+            val conferenceName: String = viewModel.getConference().name
+            withContext(Main) {
+                conference_name_tv.text = conferenceName
+                conference_messages_rv.layoutManager = LinearLayoutManager(
+                    this@ConferenceActivity,
+                    LinearLayoutManager.VERTICAL,
+                    true
+                )
+            }
+            val newMessages = messageProvider.getNewMessages(
+                viewModel.conferenceID,
+                viewModel.getLastMessageID(),
+                context = this@ConferenceActivity
+            )?: ArrayList()
+            newMessages.forEach { viewModel.saveMessageInDataBase(it) }
             val messages = viewModel.getMessages()
-            conference_messages_rv.adapter = ConferenceRecyclerViewAdapter(
-                messages,
-                context = this@ConferenceActivity,
-                this@ConferenceActivity::callbackForPhoto,
-                this@ConferenceActivity::callbackForFile
-            )
+            withContext(Main) {
+                conference_messages_rv.adapter = ConferenceRecyclerViewAdapter(
+                    messages,
+                    context = this@ConferenceActivity,
+                    this@ConferenceActivity::callbackForPhoto,
+                    this@ConferenceActivity::callbackForFile
+                )
+            }
             adapterIsInitialized = true
         }
 
@@ -124,7 +141,7 @@ class ConferenceActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == RESULT_OK) {
+        if (resultCode == RESULT_OK) {
             viewModel.viewModelScope.launch {
                 try {
                     val additionUri = data?.data ?: throw LoadImageException()
@@ -184,29 +201,35 @@ class ConferenceActivity : AppCompatActivity() {
         val messageText = conference_message_et.text.toString().trim()
         try {
             when(messageType) {
-                MESSAGE_WITH_TEXT -> {
-                    Server.sendConferenceTextMessage(
+                TEXT_MESSAGE -> {
+                    if (messageText.isEmpty()) {
+                        withContext(Main) {
+                            conference_message_sending_pb.visibility = View.INVISIBLE }
+                        return
+                    }
+                    messageSender.sendTextMessage(
                         context = this,
                         messageText,
                         viewModel.conferenceID
                     )
                 }
-                MESSAGE_WITH_PHOTO ->
-                    Server.sendConferenceMessageWithPhoto(
+                MESSAGE_WITH_PHOTO -> {
+                    messageSender.sendMessageWithPhoto(
                         context = this,
-                        addition!!.file,
+                        photo = addition!!.file,
                         messageText,
                         viewModel.conferenceID
                     )
+                }
                 AUDIO_MESSAGE ->
-                    Server.sendConferenceAudioMessage(
+                    messageSender.sendAudioMessage(
                         context = this,
-                        addition!!.file,
+                        audio = addition!!.file,
                         viewModel.conferenceID
                     )
 
                 MESSAGE_WITH_FILE -> {
-                    Server.sendConferenceMessageWithFile(
+                    messageSender.sendMessageWithFile(
                         context = this,
                         addition!!,
                         viewModel.conferenceID
@@ -214,9 +237,10 @@ class ConferenceActivity : AppCompatActivity() {
                 }
             }
             addition = null
-            messageType = MESSAGE_WITH_TEXT
-            if (messageType == MESSAGE_WITH_TEXT || messageType == MESSAGE_WITH_PHOTO) {
-                conference_message_et.setText("")
+            messageType = TEXT_MESSAGE
+            if (messageType == TEXT_MESSAGE || messageType == MESSAGE_WITH_PHOTO) {
+                withContext(Main) {
+                    conference_message_et.setText("") }
             }
 
             updateRecyclerView()
@@ -358,13 +382,13 @@ class ConferenceActivity : AppCompatActivity() {
     }
 
     private suspend fun updateRecyclerView() {
-        val messages: CMessageList = Server.getNewConferenceMessages(
+        val messages: List<CMessageEntity>? = messageProvider.getNewMessages(
             viewModel.conferenceID,
             viewModel.getLastMessageID(),
             applicationContext
         )
-        messages.list?: return
-        messages.list.forEach { viewModel.saveMessageInDataBase(it) }
+        messages?: return
+        messages.forEach { viewModel.saveMessageInDataBase(it) }
         (conference_messages_rv.adapter as ConferenceRecyclerViewAdapter).messages =
             viewModel.getMessages()
         withContext(Main) {

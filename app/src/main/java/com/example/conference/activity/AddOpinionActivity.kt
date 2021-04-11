@@ -6,7 +6,7 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_LONG
 import com.example.conference.R
 import com.example.conference.exception.AddOpinionException
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import kotlinx.android.synthetic.main.activity_add_opinion.*
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope

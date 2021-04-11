@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.example.conference.R
 import com.example.conference.exception.RegistrationException
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.RegistrationViewModel
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.android.synthetic.main.activity_registration.*

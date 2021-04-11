@@ -7,7 +7,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -15,7 +18,7 @@ import com.example.conference.R
 import com.example.conference.activity.AddContactActivity
 import com.example.conference.activity.LoginActivity
 import com.example.conference.exception.LoadImageException
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.ProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.picasso.Picasso
@@ -23,7 +26,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.*
+import java.io.IOException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 

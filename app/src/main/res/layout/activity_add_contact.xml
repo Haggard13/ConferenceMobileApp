@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#FFFFFF"
-        android:elevation="2dp"
+        android:elevation="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -32,7 +32,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/addContactBackIB"
+            android:id="@+id/add_contact_back_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
@@ -42,9 +42,21 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="?attr/homeAsUpIndicator" />
 
+        <ProgressBar
+            android:id="@+id/find_user_pb"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:elevation="2dp"
+            android:visibility="invisible"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
+        android:id="@+id/add_contact_sv"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -57,21 +69,22 @@
             android:layout_height="wrap_content">
 
             <Button
-                android:id="@+id/addContactBtn"
+                android:id="@+id/add_contact_btn"
                 android:layout_width="100dp"
                 android:layout_height="30dp"
-                android:layout_marginTop="64dp"
+                android:layout_marginTop="16dp"
                 android:layout_marginBottom="16dp"
                 android:background="@drawable/button_background"
+                android:onClick="onAddUserClick"
                 android:text="Добавить"
                 android:textColor="#FFFFFF"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/contactEmailET" />
+                app:layout_constraintTop_toBottomOf="@id/find_user_btn" />
 
             <EditText
-                android:id="@+id/contactEmailET"
+                android:id="@+id/contact_email_et"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="32dp"
@@ -84,6 +97,29 @@
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
+
+            <Button
+                android:id="@+id/find_user_btn"
+                android:layout_width="100dp"
+                android:layout_height="30dp"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/button_background"
+                android:onClick="onFindUserClick"
+                android:text="Найти"
+                android:textColor="@color/colorPrimary"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/contact_email_et" />
+
+            <ViewStub
+                android:id="@+id/user_vs"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:layout="@layout/contact_item_view"
+                app:layout_constraintBottom_toTopOf="@id/contact_email_et"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 

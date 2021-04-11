@@ -19,7 +19,7 @@ import com.example.conference.activity.CreateDialogueActivity
 import com.example.conference.activity.DialogueActivity
 import com.example.conference.adapter.DialoguesRecyclerViewAdapter
 import com.example.conference.json.OutputDialogueList
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.DialoguesViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers

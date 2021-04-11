@@ -5,7 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import com.example.conference.json.Opinion
 import com.example.conference.R
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_opinion.*
 import kotlinx.coroutines.Dispatchers

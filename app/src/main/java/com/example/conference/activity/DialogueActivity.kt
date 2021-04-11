@@ -23,7 +23,7 @@ import com.example.conference.db.entity.DMessageEntity
 import com.example.conference.exception.LoadFileException
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.DialogueViewModel
 import kotlinx.android.synthetic.main.activity_conference.*
 import kotlinx.android.synthetic.main.activity_dialogue.*

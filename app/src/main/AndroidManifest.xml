@@ -37,9 +37,16 @@
         <activity android:name=".activity.CreateDialogueActivity" />
 
         <service
-            android:name=".service.MessageService"
+            android:name=".server.MessageService"
             android:enabled="true"
             android:exported="false" />
+        <service
+            android:name=".server.firebase.ConferenceFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <activity android:name=".activity.CreateConferenceActivity" />
         <activity android:name=".activity.AddContactActivity" />

@@ -8,7 +8,7 @@ import com.example.conference.db.ConferenceRoomDatabase
 import com.example.conference.db.entity.ConferenceEntity
 import com.example.conference.exception.LoadConferenceMembersException
 import com.example.conference.json.ConferenceMembersList
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

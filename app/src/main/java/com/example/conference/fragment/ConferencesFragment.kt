@@ -22,7 +22,7 @@ import com.example.conference.activity.ConferenceActivity
 import com.example.conference.activity.CreateConferenceActivity
 import com.example.conference.adapter.ConferencesRecyclerViewAdapter
 import com.example.conference.json.OutputConferenceList
-import com.example.conference.service.Server
+import com.example.conference.server.Server
 import com.example.conference.vm.ConferencesViewModel
 import com.google.gson.Gson
 import kotlinx.coroutines.*
