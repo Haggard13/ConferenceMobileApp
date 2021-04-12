@@ -1,4 +1,4 @@
-package com.example.conference.server.conferenceapi
+package com.example.conference.server.api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

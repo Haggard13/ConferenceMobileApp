@@ -3,7 +3,7 @@ package com.example.conference.server.users
 import com.example.conference.db.entity.ContactEntity
 import com.example.conference.exception.UserFindingException
 import com.example.conference.exception.UserNotFoundException
-import com.example.conference.server.conferenceapi.ConferenceAPIProvider
+import com.example.conference.server.api.ConferenceAPIProvider
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException

@@ -1,9 +1,9 @@
-package com.example.conference.server.conferencemessaging
+package com.example.conference.server.messaging
 
 import android.content.Context
 import com.example.conference.account.Account
 import com.example.conference.db.entity.CMessageEntity
-import com.example.conference.server.conferenceapi.ConferenceAPIProvider
+import com.example.conference.server.api.ConferenceAPIProvider
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException

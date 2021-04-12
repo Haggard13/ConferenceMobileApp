@@ -35,14 +35,16 @@ import com.example.conference.db.entity.CMessageEntity
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
-import com.example.conference.server.conferencemessaging.ConferenceMessageProvider
-import com.example.conference.server.conferencemessaging.ConferenceMessageSender
 import com.example.conference.server.Server
+import com.example.conference.server.messaging.ConferenceMessageProvider
+import com.example.conference.server.messaging.ConferenceMessageSender
 import com.example.conference.vm.ConferenceViewModel
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.main.activity_conference.*
 import kotlinx.android.synthetic.main.activity_dialogue.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import okhttp3.Response
 import java.io.File
@@ -69,7 +71,6 @@ class ConferenceActivity : AppCompatActivity() {
     private var adapterIsInitialized = false
     lateinit var viewModel: ConferenceViewModel
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_conference)
@@ -79,31 +80,32 @@ class ConferenceActivity : AppCompatActivity() {
 
         checkConferenceName()
 
-        GlobalScope.launch {
-            val conferenceName: String = viewModel.getConference().name
-            withContext(Main) {
-                conference_name_tv.text = conferenceName
-                conference_messages_rv.layoutManager = LinearLayoutManager(
-                    this@ConferenceActivity,
-                    LinearLayoutManager.VERTICAL,
-                    true
-                )
-            }
-            val newMessages = messageProvider.getNewMessages(
-                viewModel.conferenceID,
-                viewModel.getLastMessageID(),
-                context = this@ConferenceActivity
-            )?: ArrayList()
-            newMessages.forEach { viewModel.saveMessageInDataBase(it) }
-            val messages = viewModel.getMessages()
-            withContext(Main) {
-                conference_messages_rv.adapter = ConferenceRecyclerViewAdapter(
-                    messages,
-                    context = this@ConferenceActivity,
-                    this@ConferenceActivity::callbackForPhoto,
-                    this@ConferenceActivity::callbackForFile
-                )
-            }
+        FirebaseMessaging.getInstance().subscribeToTopic(viewModel.conferenceID.toString())
+
+        CoroutineScope(Main).launch {
+            val conferenceName: String = withContext(IO) { viewModel.getConference().name }
+            conference_name_tv.text = conferenceName
+            conference_messages_rv.layoutManager = LinearLayoutManager(
+                this@ConferenceActivity,
+                LinearLayoutManager.VERTICAL,
+                true
+            )
+            val messages: List<CMessageEntity> =
+                withContext(IO) {
+                    val newMessages: List<CMessageEntity> = messageProvider.getNewMessages(
+                        viewModel.conferenceID,
+                        viewModel.getLastMessageID(),
+                        context = this@ConferenceActivity
+                    ) ?: ArrayList()
+                    newMessages.forEach { viewModel.saveMessageInDataBase(it) }
+                    viewModel.getMessages()
+                }
+            conference_messages_rv.adapter = ConferenceRecyclerViewAdapter(
+                messages,
+                context = this@ConferenceActivity,
+                this@ConferenceActivity::callbackForPhoto,
+                this@ConferenceActivity::callbackForFile
+            )
             adapterIsInitialized = true
         }
 

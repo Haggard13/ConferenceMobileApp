@@ -51,7 +51,6 @@ class MessageService : Service() {
         while(true) {
             try {
                 checkNewConference()
-                checkNewConferenceMessages()
                 checkNewDialogue()
                 checkNewDialogueMessages()
             }
@@ -72,25 +71,6 @@ class MessageService : Service() {
             cs.conference_list.forEach {
                 withContext(Main) {
                     newConferenceNotification(it)
-                }
-            }
-        }
-    }
-
-    private suspend fun checkNewConferenceMessages() {
-        val json = URLEncoder.encode(Gson().toJson(getCMessagesList()), "UTF-8")
-        val r = Server.get(String.format("/conference/checkNewMessage/?conference_list=%s&user_id=%s",
-            json, USER_ID))
-        if (r.isSuccessful) {
-            val mns: MNList =
-                Gson().fromJson(r.body?.string(), MNList::class.java)
-            mns.list.forEach {
-                val app: ConferenceApplication = applicationContext as ConferenceApplication
-                if (app.conference_id != it.id
-                    && getConferenceNotificationState(it.id).notification == 1) {
-                    withContext(Main) {
-                        newMessageNotification(it, true)
-                    }
                 }
             }
         }

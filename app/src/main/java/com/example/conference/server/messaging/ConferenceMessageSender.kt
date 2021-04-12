@@ -1,4 +1,4 @@
-package com.example.conference.server.conferencemessaging
+package com.example.conference.server.messaging
 
 import android.content.Context
 import com.example.conference.account.Account
@@ -7,7 +7,7 @@ import com.example.conference.db.data.SenderEnum
 import com.example.conference.db.entity.CMessageEntity
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
-import com.example.conference.server.conferenceapi.ConferenceAPIProvider
+import com.example.conference.server.api.ConferenceAPIProvider
 import com.example.conference.server.sender.MessageSender
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
