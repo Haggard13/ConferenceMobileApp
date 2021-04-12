@@ -1,14 +1,13 @@
-package com.example.conference.server.messaging
+package com.example.conference.server.sender
 
 import android.content.Context
 import com.example.conference.account.Account
 import com.example.conference.db.data.MessageType
 import com.example.conference.db.data.SenderEnum
-import com.example.conference.db.entity.CMessageEntity
+import com.example.conference.db.entity.DMessageEntity
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
 import com.example.conference.server.api.ConferenceAPIProvider
-import com.example.conference.server.sender.MessageSender
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -19,18 +18,18 @@ import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.util.*
 
-class ConferenceMessageSender: MessageSender() {
+class DialogueMessageSender : MessageSender() {
     private val conferenceAPI = ConferenceAPIProvider.conferenceAPI
 
-    override fun sendTextMessage(context: Context, messageText: String, conferenceID: Int) {
+    override fun sendTextMessage(context: Context, messageText: String, messengerID: Int) {
         val account = Account(context)
 
-        val message = CMessageEntity(
+        val message = DMessageEntity(
             id = -1,
             messageText,
             date_time = Date().time,
             account.userID,
-            conferenceID,
+            messengerID,
             sender_name = account.userName?: "",
             sender_surname = account.userSurname?: "",
             SenderEnum.USER.ordinal,
@@ -39,17 +38,16 @@ class ConferenceMessageSender: MessageSender() {
 
         try {
             val messageID: Int = conferenceAPI
-                .sendTextMessageInConference(message)
+                .sendTextMessageInDialogue(message)
                 .execute()
                 .body()?: -1
             if (messageID == -1)
                 throw SendMessageException()
-        } catch (e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
+        } catch (e: Exception) {
+            when(e) {
+                is ConnectException, is SocketTimeoutException, is SocketException ->
+                    throw SendMessageException()
+            }
         }
     }
 
@@ -57,15 +55,15 @@ class ConferenceMessageSender: MessageSender() {
         context: Context,
         photo: ByteArray?,
         messageText: String,
-        conferenceID: Int
+        messengerID: Int
     ) {
         val accountData = Account(context)
-        val message = CMessageEntity(
+        val message = DMessageEntity(
             id = -1,
             messageText,
             date_time = Date().time,
             sender_id = accountData.userID,
-            conferenceID,
+            messengerID,
             sender_name = accountData.userName?: "",
             sender_surname = accountData.userSurname?: "",
             SenderEnum.USER.ordinal,
@@ -83,29 +81,28 @@ class ConferenceMessageSender: MessageSender() {
             .toRequestBody("application/json".toMediaTypeOrNull())
         try {
             val messageID: Int = conferenceAPI
-                .sendMessageWithPhotoInConference(photoMultipart, messageRequestBody)
+                .sendMessageWithPhotoInDialogue(photoMultipart, messageRequestBody)
                 .execute()
                 .body()?: -1
             if (messageID == -1) {
                 throw SendMessageException()
             }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
+        } catch(e: Exception) {
+            when(e) {
+                is ConnectException, is SocketException, is SocketTimeoutException ->
+                    throw SendMessageException()
+            }
         }
     }
 
-    override fun sendAudioMessage(context: Context, audio: ByteArray?, conferenceID: Int) {
+    override fun sendAudioMessage(context: Context, audio: ByteArray?, messengerID: Int) {
         val accountData = Account(context)
-        val message = CMessageEntity(
+        val message = DMessageEntity(
             id = -1,
             "Аудиосообщение",
             Date().time,
             accountData.userID,
-            conferenceID,
+            messengerID,
             accountData.userName?: "",
             accountData.userSurname?: "",
             SenderEnum.USER.ordinal,
@@ -125,29 +122,28 @@ class ConferenceMessageSender: MessageSender() {
         try {
             val messageID: Int =
                 conferenceAPI
-                    .sendAudioMessageInConference(audioMultipart, messageRequestBody)
+                    .sendAudioMessageInDialogue(audioMultipart, messageRequestBody)
                     .execute()
                     .body()?: -1
             if (messageID == -1) {
                 throw SendMessageException()
             }
         } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
+            when(e) {
+                is ConnectException, is SocketTimeoutException, is SocketException ->
+                    throw SendMessageException()
+            }
         }
     }
 
-    override fun sendMessageWithFile(context: Context, addition: Addition, conferenceID: Int) {
+    override fun sendMessageWithFile(context: Context, addition: Addition, messengerID: Int) {
         val accountData = Account(context)
-        val message = CMessageEntity(
+        val message = DMessageEntity(
             id = -1,
             addition.name,
             Date().time,
             accountData.userID,
-            conferenceID,
+            messengerID,
             accountData.userName?: "",
             accountData.userSurname?: "",
             SenderEnum.USER.ordinal,
@@ -166,18 +162,17 @@ class ConferenceMessageSender: MessageSender() {
         try {
             val messageID: Int =
                 conferenceAPI
-                    .sendMessageWithFileInConference(fileMultipart, messageRequestBody)
+                    .sendMessageWithFileInDialogue(fileMultipart, messageRequestBody)
                     .execute()
                     .body()?: -1
             if (messageID == -1) {
                 throw SendMessageException()
             }
-        } catch(e: SocketException) {
-            throw SendMessageException()
-        } catch (e: ConnectException) {
-            throw SendMessageException()
-        } catch (e: SocketTimeoutException) {
-            throw SendMessageException()
+        } catch(e: Exception) {
+            when(e) {
+                is ConnectException, is SocketException, is SocketTimeoutException ->
+                    throw SendMessageException()
+            }
         }
     }
 }

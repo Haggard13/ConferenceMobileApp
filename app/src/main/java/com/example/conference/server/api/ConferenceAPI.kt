@@ -77,10 +77,10 @@ interface ConferenceAPI {
      */
     @GET("/dialogue/get_new_messages")
     fun getNewDialogueMessages(
-        @Query("conference_id") conferenceID: Int,
+        @Query("dialogue_id") dialogueID: Int,
         @Query("last_message_id") lastMessageID: Int,
         @Query("user_id") userID: Int
-    ): Call<List<CMessageEntity>>
+    ): Call<List<DMessageEntity>>
     //endregion
 
     //region User Managing

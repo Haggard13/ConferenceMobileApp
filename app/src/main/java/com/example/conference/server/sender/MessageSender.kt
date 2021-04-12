@@ -7,25 +7,25 @@ abstract class MessageSender {
     abstract fun sendTextMessage(
         context: Context,
         messageText: String,
-        conferenceID: Int
+        messengerID: Int
     )
 
     abstract fun sendMessageWithPhoto(
         context: Context,
         photo: ByteArray?,
         messageText: String,
-        conferenceID: Int
+        messengerID: Int
     )
 
     open fun sendAudioMessage(
         context: Context,
         audio: ByteArray?,
-        conferenceID: Int
+        messengerID: Int
     ) {}
 
     open fun sendMessageWithFile(
         context: Context,
         addition: Addition,
-        conferenceID: Int
+        messengerID: Int
     ) {}
 }

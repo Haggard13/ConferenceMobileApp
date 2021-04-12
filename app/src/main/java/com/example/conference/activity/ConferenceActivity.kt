@@ -36,8 +36,8 @@ import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
 import com.example.conference.server.Server
-import com.example.conference.server.messaging.ConferenceMessageProvider
-import com.example.conference.server.messaging.ConferenceMessageSender
+import com.example.conference.server.provider.ConferenceMessageProvider
+import com.example.conference.server.sender.ConferenceMessageSender
 import com.example.conference.vm.ConferenceViewModel
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.messaging.FirebaseMessaging
