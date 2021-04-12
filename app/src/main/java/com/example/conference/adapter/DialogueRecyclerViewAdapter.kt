@@ -29,7 +29,6 @@ import kotlinx.android.synthetic.main.your_message_item_view.view.userMessageTim
 import kotlinx.android.synthetic.main.your_message_item_view_audio_message.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_file.view.*
 import kotlinx.android.synthetic.main.your_message_item_view_with_photo.view.*
-import java.lang.IllegalArgumentException
 import java.text.SimpleDateFormat
 import java.util.*
 import androidx.recyclerview.widget.RecyclerView.Adapter as RVAdapter
@@ -149,8 +148,8 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load("${Server.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -171,8 +170,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -180,8 +179,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
-                .placeholder(R.drawable.photo)
-                .error(R.drawable.photo)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(itemView.WPmemberPhotoInMessageIV)
@@ -203,8 +202,8 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load("${Server.baseURL}/user/avatar/download/?id=${messages[p].sender_id}")
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -223,8 +222,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -232,8 +231,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/dialogue/getPhotography/?id=" + messages[p].id)
-                .placeholder(R.drawable.photo)
-                .error(R.drawable.photo)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(itemView.WPuserPhotoInMessageIV)
@@ -262,8 +261,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -285,14 +284,14 @@ class DialogueRecyclerViewAdapter(
                     Uri.parse("${Server.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
-                    (v as ImageButton).setImageResource(R.drawable.play)
+                    (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
                 }
                 prepare()
                 start()
             }
 
             v.setOnClickListener(this::onStop)
-            (v as ImageButton).setImageResource(R.drawable.stop)
+            (v as ImageButton).setImageResource(R.drawable.outline_stop_24)
 
 
             itemView.AMmemberProgressAudioSB.max = mp.duration / 1000
@@ -313,7 +312,7 @@ class DialogueRecyclerViewAdapter(
 
             handler.removeCallbacks(runnable)
 
-            (v as ImageButton).setImageResource(R.drawable.play)
+            (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
@@ -335,8 +334,8 @@ class DialogueRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -357,14 +356,14 @@ class DialogueRecyclerViewAdapter(
                     Uri.parse("${Server.baseURL}/dialogue/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
-                    (v as ImageButton).setImageResource(R.drawable.play)
+                    (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
                 }
                 prepare()
                 start()
             }
 
             v.setOnClickListener(this::onStop)
-            (v as ImageButton).setImageResource(R.drawable.stop)
+            (v as ImageButton).setImageResource(R.drawable.outline_stop_24)
 
 
             itemView.AMuserProgressAudioSB.max = mp.duration / 1000
@@ -385,7 +384,7 @@ class DialogueRecyclerViewAdapter(
 
             handler.removeCallbacks(runnable)
 
-            (v as ImageButton).setImageResource(R.drawable.play)
+            (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
@@ -401,8 +400,8 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -424,8 +423,8 @@ class DialogueRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)

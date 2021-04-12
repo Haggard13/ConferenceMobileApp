@@ -76,7 +76,7 @@
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:srcCompat="@drawable/pencil" />
+                    app:srcCompat="@drawable/outline_edit_24" />
             </androidx.constraintlayout.widget.ConstraintLayout>
 
             <LinearLayout
@@ -152,10 +152,10 @@
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:elevation="2dp"
-            android:scaleType="fitCenter"
+            android:scaleType="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="?attr/homeAsUpIndicator" />
+            app:srcCompat="@drawable/outline_arrow_back_24" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -186,11 +186,10 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="#00FFFFFF"
-            android:padding="10dp"
             android:scaleType="fitXY"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/add" />
+            app:srcCompat="@drawable/outline_add_24" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView

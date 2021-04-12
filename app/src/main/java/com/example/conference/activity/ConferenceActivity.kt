@@ -153,13 +153,13 @@ class ConferenceActivity : AppCompatActivity() {
                             addition =
                                 Addition(fileStream!!.readBytes(), File(additionUri.path!!).name)
                             messageType = MESSAGE_WITH_FILE
-                            conference_add_addition_ib.setImageResource(R.drawable.file)
+                            conference_add_addition_ib.setImageResource(R.drawable.outline_upload_file_24)
                         }
 
                         PHOTO_LOADING -> {
                             addition = Addition(fileStream!!.readBytes(), "photo")
                             messageType = MESSAGE_WITH_PHOTO
-                            conference_add_addition_ib.setImageResource(R.drawable.photo)
+                            conference_add_addition_ib.setImageResource(R.drawable.outline_photo_camera_24)
                         }
                     }
                     conference_add_addition_ib.isEnabled = false
@@ -248,7 +248,7 @@ class ConferenceActivity : AppCompatActivity() {
             updateRecyclerView()
 
             withContext(Main) {
-                conference_add_addition_ib.setImageResource(R.drawable.add)
+                conference_add_addition_ib.setImageResource(R.drawable.outline_add_24)
                 conference_add_addition_ib.isEnabled = true
             }
         } catch (e: SendMessageException) {

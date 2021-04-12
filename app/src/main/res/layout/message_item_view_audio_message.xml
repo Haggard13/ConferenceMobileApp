@@ -60,9 +60,8 @@
                         android:layout_width="30dp"
                         android:layout_height="30dp"
                         android:background="#FFFFFF"
-                        android:padding="5dp"
                         android:scaleType="fitXY"
-                        app:srcCompat="@drawable/play" />
+                        app:srcCompat="@drawable/outline_play_arrow_24" />
 
                     <SeekBar
                         android:id="@+id/AMmemberProgressAudioSB"

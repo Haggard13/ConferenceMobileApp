@@ -5,13 +5,13 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -30,7 +30,6 @@ import kotlinx.android.synthetic.main.activity_dialogue.*
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalStateException
 import java.net.ConnectException
 import java.net.SocketTimeoutException
 import java.util.*
@@ -92,7 +91,7 @@ class DialogueActivity : AppCompatActivity() {
                     val fileStream = contentResolver.openInputStream(imageUri)
                     photo = fileStream!!.readBytes()
                     messageType = MESSAGE_WITH_PHOTO
-                    dialogue_add_file_ib.setImageResource(R.drawable.photo)
+                    dialogue_add_file_ib.setImageResource(R.drawable.outline_photo_camera_24)
                     dialogue_add_file_ib.isEnabled = false
                 } catch (e: IOException) {
                     vm.showToast("Не удалось загрузить изображение")
@@ -105,7 +104,7 @@ class DialogueActivity : AppCompatActivity() {
                     val fileStream = contentResolver.openInputStream(fileUri)
                     file = MyFile(fileStream!!.readBytes(), File(fileUri.path!!).name)
                     messageType = MESSAGE_WITH_FILE
-                    dialogue_add_file_ib.setImageResource(R.drawable.file)
+                    dialogue_add_file_ib.setImageResource(R.drawable.outline_upload_file_24)
                     dialogue_add_file_ib.isEnabled = false
                 } catch (e: IOException) {
                     vm.showToast("Не удалось загрузить файл")
@@ -116,7 +115,7 @@ class DialogueActivity : AppCompatActivity() {
 
     private fun onAddFileClick(v: View) = showPopupMenu(v)
 
-    fun onEnterMessageButtonClick(v: View) {
+    private fun onEnterMessageButtonClick(v: View) {
         var messageText = dialogue_message_et.text.toString()
         if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO
             && messageType != MESSAGE_WITH_FILE)
@@ -207,7 +206,7 @@ class DialogueActivity : AppCompatActivity() {
             photo = null
             audio = null
             withContext(Dispatchers.Main) {
-                dialogue_add_file_ib.setImageResource(R.drawable.add)
+                dialogue_add_file_ib.setImageResource(R.drawable.outline_add_24)
                 dialogue_add_file_ib.isEnabled = true
             }
         } catch (e: SendMessageException) {

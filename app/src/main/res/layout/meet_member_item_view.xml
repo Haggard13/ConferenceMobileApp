@@ -43,9 +43,8 @@
                     android:layout_marginLeft="5dp"
                     android:layout_marginRight="5dp"
                     android:background="@drawable/button_bottom_navigation_view_background"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    app:srcCompat="@android:drawable/presence_offline" />
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/outline_clear_24" />
 
                 <ImageButton
                     android:id="@+id/muteMemberIB"
@@ -54,9 +53,8 @@
                     android:layout_gravity="center_vertical"
                     android:layout_marginLeft="5dp"
                     android:background="@drawable/button_bottom_navigation_view_background"
-                    android:padding="5dp"
-                    android:scaleType="fitCenter"
-                    app:srcCompat="@drawable/micro_meet" />
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/outline_mic_24" />
 
                 <TextView
                     android:layout_width="match_parent"

@@ -150,8 +150,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -172,8 +172,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -194,8 +194,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -203,8 +203,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
-                .placeholder(R.drawable.photo)
-                .error(R.drawable.photo)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(itemView.WPmemberPhotoInMessageIV)
@@ -228,8 +228,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -237,8 +237,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/conference/getPhotography/?id=" + messages[p].id)
-                .placeholder(R.drawable.photo)
-                .error(R.drawable.photo)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(itemView.WPuserPhotoInMessageIV)
@@ -267,8 +267,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -290,14 +290,14 @@ class ConferenceRecyclerViewAdapter(
                     Uri.parse("${Server.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
-                    (v as ImageButton).setImageResource(R.drawable.play)
+                    (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
                 }
                 prepare()
                 start()
             }
 
             v.setOnClickListener(this::onStop)
-            (v as ImageButton).setImageResource(R.drawable.stop)
+            (v as ImageButton).setImageResource(R.drawable.outline_stop_24)
 
 
             itemView.AMmemberProgressAudioSB.max = mp.duration / 1000
@@ -318,7 +318,7 @@ class ConferenceRecyclerViewAdapter(
 
             handler.removeCallbacks(runnable)
 
-            (v as ImageButton).setImageResource(R.drawable.play)
+            (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
@@ -340,8 +340,8 @@ class ConferenceRecyclerViewAdapter(
             //region Picasso
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -362,14 +362,14 @@ class ConferenceRecyclerViewAdapter(
                     Uri.parse("${Server.baseURL}/conference/getAudioMessage/?id=${messages[p].id}")
                 )
                 setOnCompletionListener {
-                    (v as ImageButton).setImageResource(R.drawable.play)
+                    (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
                 }
                 prepare()
                 start()
             }
 
             v.setOnClickListener(this::onStop)
-            (v as ImageButton).setImageResource(R.drawable.stop)
+            (v as ImageButton).setImageResource(R.drawable.outline_stop_24)
 
 
             itemView.AMuserProgressAudioSB.max = mp.duration / 1000
@@ -390,7 +390,7 @@ class ConferenceRecyclerViewAdapter(
 
             handler.removeCallbacks(runnable)
 
-            (v as ImageButton).setImageResource(R.drawable.play)
+            (v as ImageButton).setImageResource(R.drawable.outline_play_arrow_24)
             v.setOnClickListener(this::onPlay)
 
             v.isEnabled = true
@@ -406,8 +406,8 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)
@@ -429,8 +429,8 @@ class ConferenceRecyclerViewAdapter(
         fun bind(p: Int) {
             Picasso.get()
                 .load(Server.baseURL + "/user/avatar/download/?id=" + messages[p].sender_id)
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
+                .placeholder(R.drawable.outline_photo_camera_24)
+                .error(R.drawable.outline_photo_camera_24)
                 .fit()
                 .centerCrop()
                 .into(avatar)

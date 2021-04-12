@@ -41,9 +41,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
                 android:onClick="onMembersClick"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/members_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_people_24" />
 
             <ImageButton
                 android:id="@+id/roomIB"
@@ -52,9 +51,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
                 android:onClick="onRoomClick"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/room_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_meeting_room_24" />
 
             <ImageButton
                 android:id="@+id/chatIB"
@@ -63,9 +61,8 @@
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
                 android:onClick="onChatClick"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/chat_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_chat_24" />
 
             <ImageButton
                 android:id="@+id/shareScreenIB"
@@ -73,9 +70,8 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/share_screen_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_mobile_screen_share_24" />
 
             <ImageButton
                 android:id="@+id/videoBroadcastIB"
@@ -83,9 +79,8 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/video_broadcast_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_videocam_24" />
 
             <ImageButton
                 android:id="@+id/microIB"
@@ -93,9 +88,8 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:background="@drawable/button_bottom_navigation_view_background"
-                android:padding="7dp"
-                android:scaleType="fitCenter"
-                android:src="@drawable/micro_meet" />
+                android:scaleType="center"
+                android:src="@drawable/outline_mic_24" />
 
         </LinearLayout>
 

@@ -36,11 +36,10 @@
             android:layout_height="40dp"
             android:background="#FFFFFF"
             android:elevation="2dp"
-            android:padding="10dp"
-            android:scaleType="fitXY"
+            android:scaleType="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/add" />
+            app:srcCompat="@drawable/outline_add_24" />
 
         <ImageButton
             android:id="@+id/resultCardsBackIB"
@@ -48,10 +47,10 @@
             android:layout_height="40dp"
             android:background="#FFFFFF"
             android:elevation="2dp"
-            android:scaleType="fitXY"
+            android:scaleType="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="?attr/homeAsUpIndicator" />
+            app:srcCompat="@drawable/outline_arrow_back_24" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
