@@ -1,14 +1,11 @@
 package com.example.conference.db.dao
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
+import androidx.room.*
 import com.example.conference.db.entity.ConferenceEntity
 
 @Dao
 interface ConferenceDao {
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(c: ConferenceEntity): Long
 
     @Query("SELECT * FROM conferences_table WHERE id = :id")
@@ -22,7 +19,6 @@ interface ConferenceDao {
 
     @Query("SELECT MAX(id) FROM conferences_table")
     suspend fun getLastID() : Int
-
 
     @Update
     suspend fun update(c: ConferenceEntity)

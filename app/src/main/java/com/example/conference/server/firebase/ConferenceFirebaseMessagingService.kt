@@ -3,8 +3,10 @@ package com.example.conference.server.firebase
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Intent
 import android.graphics.Bitmap
-import android.os.Build
+import android.os.Build.VERSION.SDK_INT
+import android.os.Build.VERSION_CODES.O
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -32,46 +34,75 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
 
     override fun onMessageReceived(p0: RemoteMessage) {
         super.onMessageReceived(p0)
-        if (p0.data["senderID"]!!.toInt() == Account(this).userID) {
-            //return
+        when (p0.data["notification_type"]) {
+            "cmessage" ->
+                CoroutineScope(Main).launch {
+                    sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
+                    notifyNewMessage(p0)
+                }
+            "dmessage" ->
+                CoroutineScope(Main).launch {
+                    sendBroadcast(Intent("NEW_DIALOGUE_MESSAGE"))
+                    notifyNewMessage(p0)
+                }
+            "conference" ->
+                CoroutineScope(Main).launch {
+                    notifyNewConference(p0)
+                }
         }
-        CoroutineScope(Main).launch {
-            val notificationManager = NotificationManagerCompat
-                .from(this@ConferenceFirebaseMessagingService)
 
-            val avatar = getAvatar(p0.data["isConference"].toBoolean(), p0.data["id"]!!.toInt())
+    }
 
-            val notification: Notification =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val channel: NotificationChannel =
-                        createChannel(p0.data["isConference"].toBoolean())
-                    notificationManager.createNotificationChannel(channel)
-                    NotificationCompat.Builder(
-                        this@ConferenceFirebaseMessagingService,
-                        channel.id
-                    )
-                } else {
-                    NotificationCompat.Builder(this@ConferenceFirebaseMessagingService)
-                }.setMessagingStyle(p0, avatar)
-                    .build()
-            notificationManager.notify(p0.data["id"]!!.toInt(), notification)
-        }
+    private fun notifyNewConference(p0: RemoteMessage) {
+        TODO("Not yet implemented")
+    }
+
+    private suspend fun notifyNewMessage(p0: RemoteMessage) {
+        val notificationType = p0.data["notification_type"]
+        val id = p0.data["id"]!!.toInt()
+
+        if (p0.data["senderID"]!!.toInt() == Account(this).userID) return
+
+        val nManager = NotificationManagerCompat
+            .from(this)
+
+        val avatar = getAvatar(notificationType == "cmessage", id)
+
+        val n: Notification =
+            if (SDK_INT >= O) {
+                val channel: NotificationChannel =
+                    createChannel(notificationType == "cmessage")
+                nManager.createNotificationChannel(channel)
+
+                NotificationCompat.Builder(
+                    this@ConferenceFirebaseMessagingService,
+                    channel.id
+                )
+            } else {
+                NotificationCompat.Builder(this@ConferenceFirebaseMessagingService)
+            }
+                .setMessagingStyle(p0, avatar)
+                .build()
+
+        nManager.notify(id, n)
     }
     
-    private fun NotificationCompat.Builder.setMessagingStyle(p0: RemoteMessage, avatar: Bitmap):
-            NotificationCompat.Builder {
-        val sender = Person.Builder()
-            .setName(p0.notification!!.title)
-            .setIcon(IconCompat.createWithBitmap(avatar))
-            .build()
-        val style = NotificationCompat.MessagingStyle(sender)
-            .addMessage(p0.notification!!.body, p0.data["time"]!!.toLong(), sender)
+    private fun NotificationCompat.Builder.setMessagingStyle(p0: RemoteMessage, avatar: Bitmap
+    ): NotificationCompat.Builder {
+        val sender =
+            Person.Builder()
+                .setName(p0.notification!!.title)
+                .setIcon(IconCompat.createWithBitmap(avatar))
+                .build()
+        val style =
+            NotificationCompat.MessagingStyle(sender)
+                .addMessage(p0.notification!!.body, p0.data["time"]!!.toLong(), sender)
         
         return this.setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(style)
     }
     
-    @RequiresApi(Build.VERSION_CODES.O)
+    @RequiresApi(O)
     private fun createChannel(isConference: Boolean) =
         if (isConference) {
             NotificationChannel(

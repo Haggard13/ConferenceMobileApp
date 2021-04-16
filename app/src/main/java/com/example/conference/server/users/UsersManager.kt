@@ -11,7 +11,7 @@ import java.net.SocketTimeoutException
 class UsersManager {
     private val conferenceAPI =  ConferenceAPIProvider.conferenceAPI
 
-    fun findUser(email: String): ContactEntity {
+    suspend fun findUser(email: String): ContactEntity {
         try {
             val response = conferenceAPI.getUserInfo(email).execute()
 

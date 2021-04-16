@@ -1,8 +1,6 @@
 package com.example.conference.server.api
 
-import com.example.conference.db.entity.CMessageEntity
-import com.example.conference.db.entity.ContactEntity
-import com.example.conference.db.entity.DMessageEntity
+import com.example.conference.db.entity.*
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
@@ -83,10 +81,17 @@ interface ConferenceAPI {
     ): Call<List<DMessageEntity>>
     //endregion
 
-    //region User Managing
+    //region Users
     @POST("/user/send_firebase_messaging_token")
     fun sendFirebaseMessagingToken(@Body token: String): Call<ResponseBody>
 
     @GET("/user/get_user_info")
     fun getUserInfo(@Query("email") email: String): Call<ContactEntity>
+    //endregion
+
+    @GET("/conference/get_all_conferences")
+    fun getAllConferences(@Query("user_id") userID: Int): Call<List<ConferenceEntity>>
+
+    @GET("/dialogue/get_all_dialogues")
+    fun getAllDialogues(@Query("user_id") userID: Int): Call<List<DialogueEntity>>
 }

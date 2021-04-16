@@ -21,7 +21,7 @@ import java.util.*
 class DialogueMessageSender : MessageSender() {
     private val conferenceAPI = ConferenceAPIProvider.conferenceAPI
 
-    override fun sendTextMessage(context: Context, messageText: String, messengerID: Int) {
+    override suspend fun sendTextMessage(context: Context, messageText: String, messengerID: Int) {
         val account = Account(context)
 
         val message = DMessageEntity(
@@ -51,7 +51,7 @@ class DialogueMessageSender : MessageSender() {
         }
     }
 
-    override fun sendMessageWithPhoto(
+    override suspend fun sendMessageWithPhoto(
         context: Context,
         photo: ByteArray?,
         messageText: String,
@@ -95,7 +95,7 @@ class DialogueMessageSender : MessageSender() {
         }
     }
 
-    override fun sendAudioMessage(context: Context, audio: ByteArray?, messengerID: Int) {
+    override suspend fun sendAudioMessage(context: Context, audio: ByteArray?, messengerID: Int) {
         val accountData = Account(context)
         val message = DMessageEntity(
             id = -1,
@@ -136,7 +136,7 @@ class DialogueMessageSender : MessageSender() {
         }
     }
 
-    override fun sendMessageWithFile(context: Context, addition: Addition, messengerID: Int) {
+    override suspend fun sendMessageWithFile(context: Context, addition: Addition, messengerID: Int) {
         val accountData = Account(context)
         val message = DMessageEntity(
             id = -1,

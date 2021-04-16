@@ -10,5 +10,6 @@ data class ConferenceEntity(
 
     var name: String,
     var count: Int,
-    var notification: Int
+    var last_message: String,
+    var last_message_time: Long,
 )

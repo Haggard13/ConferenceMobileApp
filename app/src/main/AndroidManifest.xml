@@ -37,10 +37,6 @@
         <activity android:name=".activity.CreateDialogueActivity" />
 
         <service
-            android:name=".server.MessageService"
-            android:enabled="true"
-            android:exported="false" />
-        <service
             android:name=".server.firebase.ConferenceFirebaseMessagingService"
             android:exported="false">
             <intent-filter>

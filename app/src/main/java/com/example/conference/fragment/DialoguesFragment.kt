@@ -1,138 +1,145 @@
 package com.example.conference.fragment
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ProgressBar
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.conference.R
 import com.example.conference.activity.CreateDialogueActivity
 import com.example.conference.activity.DialogueActivity
 import com.example.conference.adapter.DialoguesRecyclerViewAdapter
-import com.example.conference.json.OutputDialogueList
-import com.example.conference.server.Server
+import com.example.conference.databinding.FragmentDialoguesBinding
+import com.example.conference.db.entity.DialogueEntity
+import com.example.conference.exception.ConferencesGettingException
+import com.example.conference.server.provider.DialogueProvider
 import com.example.conference.vm.DialoguesViewModel
-import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.net.ConnectException
-import java.net.SocketTimeoutException
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
 
 class DialoguesFragment : Fragment() {
 
-    private lateinit var vm: DialoguesViewModel
-    private var dialogueCount = 0
-    private lateinit var pb: ProgressBar
+    private lateinit var viewModel: DialoguesViewModel
+    private lateinit var adapter: DialoguesRecyclerViewAdapter
+    private val dialogueProvider = DialogueProvider()
+    private var binding: FragmentDialoguesBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        vm = ViewModelProvider(this).get(DialoguesViewModel::class.java)
+
+        viewModel = ViewModelProvider(this).get(DialoguesViewModel::class.java)
+
+        activity!!.registerReceiver(
+            NewMessageBroadcastReceiver(),
+            IntentFilter("NEW_CONFERENCE_MESSAGE")
+        )
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val v = inflater.inflate(R.layout.fragment_dialogues, container, false)
+        binding = FragmentDialoguesBinding.inflate(inflater, container, false)
+        return binding!!.root
+    }
 
-        pb = v.findViewById(R.id.dialoguesPB)
-        vm.viewModelScope.launch {
-            withContext(Dispatchers.Main) {
-                pb.visibility = View.VISIBLE
-            }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-            val dialogues = vm.getDialogues()
-            val lastMessages = vm.getLastMessages(dialogues)
-            val rv = v.findViewById<RecyclerView>(R.id.dialoguesRV)
+        viewModel.viewModelScope.launch {
+            binding?.dialoguesRV?.apply {
 
-            vm.adapter = DialoguesRecyclerViewAdapter(dialogues, lastMessages) {
-                startActivity(
-                    Intent(activity, DialogueActivity::class.java)
-                        .putExtra("dialogue_id", it)
-                )
-            }
+                layoutManager =
+                    LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
 
-            rv.layoutManager = LinearLayoutManager(activity)
-            rv.adapter = vm.adapter
-
-
-            dialogueCount = vm.dialogueCount()
-
-            withContext(Dispatchers.Main) {
-                pb.visibility = View.INVISIBLE
+                this@DialoguesFragment.adapter = DialoguesRecyclerViewAdapter(
+                    viewModel
+                        .getDialogues()
+                        .sortedByDescending { it.last_message_time }
+                ) { dialogueID ->
+                    startActivity(
+                        Intent(activity, DialogueActivity::class.java)
+                            .putExtra("conference_id", dialogueID)
+                    )
+                }
+                adapter = this@DialoguesFragment.adapter
             }
         }
 
-        v.findViewById<ImageButton>(R.id.addDialogueIB).setOnClickListener(this::addDialogueOnClick)
+        binding?.addDialogueIB?.setOnClickListener(this::onAddDialogueClick)
 
-        val sr = v.findViewById<SwipeRefreshLayout>(R.id.dialogueSR)
-        sr.setColorSchemeResources(R.color.colorAccent)
-        sr.setOnRefreshListener {
-            GlobalScope.launch {
-                refreshList()
-                withContext(Dispatchers.Main) {sr.isRefreshing = false}
+        binding?.dialogueSR?.apply {
+            setColorSchemeResources(R.color.colorAccent)
+            setOnRefreshListener {
+                CoroutineScope(Main).launch {
+                    updateDialogues()
+                    isRefreshing = false
+                }
             }
         }
-        return v
     }
 
     override fun onResume() {
         super.onResume()
-        GlobalScope.launch {
-            withContext(Dispatchers.Main) {
-                pb.visibility = View.VISIBLE
-            }
-            refreshList()
-            withContext(Dispatchers.Main) {
-                pb.visibility = View.INVISIBLE
-            }
+        CoroutineScope(Main).launch {
+            binding?.dialoguesPB?.isVisible = true
+            updateDialogues()
+            binding?.dialoguesPB?.isVisible = false
         }
     }
 
-    private suspend fun refreshList() {
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+
+    private fun onAddDialogueClick(v: View) {
+        startActivity(Intent(activity, CreateDialogueActivity::class.java))
+    }
+
+    private suspend fun updateDialogues() {
         try {
-            val r = Server.get(
-                String.format(
-                    "/dialogue/getNewDialogue/?user_id=%s&last_dialogue_id=%s",
-                    activity?.getSharedPreferences("user_info", Context.MODE_PRIVATE)
-                        ?.getInt("user_id", 0),
-                    vm.getLastID()
-                )
-            )
+            val dialogues: List<DialogueEntity> =
+                withContext(IO) {
+                    dialogueProvider
+                        .getAllDialogues(activity!!.applicationContext)
+                        .sortedByDescending { it.last_message_time }
+                }
 
-            val result = r.body?.string() ?: ""
+            if (dialogues.isEmpty())
+                return
 
-            if (r.isSuccessful) {
-                val ds = Gson().fromJson(result, OutputDialogueList::class.java)
-                ds.list.forEach {
-                    vm.addDialogue(it)
+            adapter.apply {
+                this.dialogues = dialogues
+                notifyDataSetChanged()
+            }
+
+            withContext(IO) {
+                dialogues.forEach {
+                    viewModel.addDialogue(it)
                 }
             }
-
-            if (dialogueCount != vm.dialogueCount()) {
-                vm.updateAdapterDialogues()
-                dialogueCount = vm.dialogueCount()
-            }
-            vm.updateAdapterLastMessages()
-            withContext(Dispatchers.Main) { vm.adapter.notifyDataSetChanged()}
-        }
-        catch (e: ConnectException) {
-            vm.showToast(activity!!, "Проверьте подключение к сети")
-        }
-        catch (e: SocketTimeoutException) {
-            vm.showToast(activity!!, "Проверьте подключение к сети")
+        } catch (e: ConferencesGettingException) {
+            Snackbar
+                .make(binding?.root!!, "Проверьте подключение к сети", Snackbar.LENGTH_SHORT)
+                .show()
         }
     }
 
-    private fun addDialogueOnClick(v: View) {
-        startActivity(Intent(activity, CreateDialogueActivity::class.java))
+    private inner class NewMessageBroadcastReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            CoroutineScope(Main).launch {
+                if (lifecycle.currentState == Lifecycle.State.RESUMED)
+                    updateDialogues()
+            }
+        }
     }
 }

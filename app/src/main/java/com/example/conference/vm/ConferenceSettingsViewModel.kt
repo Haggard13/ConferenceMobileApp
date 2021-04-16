@@ -24,11 +24,6 @@ class ConferenceSettingsViewModel(val app: Application): AndroidViewModel(app) {
 
     suspend fun getConference(): ConferenceEntity = conferenceDao.getConference(conferenceID)[0]
 
-    suspend fun setNotification(n: Int) {
-        conference.notification = n
-        conferenceDao.update(conference)
-    }
-
     suspend fun showToast(text: String) = withContext(Dispatchers.Main) { Toast.makeText(app, text, Toast.LENGTH_LONG).show() }
     suspend fun renameConference(name: String) {
         conference.name = name

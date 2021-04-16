@@ -2,153 +2,145 @@ package com.example.conference.fragment
 
 import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.ProgressBar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.example.conference.R
 import com.example.conference.activity.ConferenceActivity
 import com.example.conference.activity.CreateConferenceActivity
 import com.example.conference.adapter.ConferencesRecyclerViewAdapter
-import com.example.conference.json.OutputConferenceList
-import com.example.conference.server.Server
+import com.example.conference.databinding.FragmentConferencesBinding
+import com.example.conference.db.entity.ConferenceEntity
+import com.example.conference.exception.ConferencesGettingException
+import com.example.conference.server.provider.ConferenceProvider
 import com.example.conference.vm.ConferencesViewModel
-import com.google.gson.Gson
-import kotlinx.coroutines.*
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import java.net.ConnectException
-import java.net.SocketTimeoutException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ConferencesFragment : Fragment() {
 
-    private lateinit var vm: ConferencesViewModel
-    private var conferenceCount = 0
-    private lateinit var pb: ProgressBar
-    private var needRVUpdate = false
+    private lateinit var viewModel: ConferencesViewModel
+    private lateinit var adapter: ConferencesRecyclerViewAdapter
+    private val conferenceProvider = ConferenceProvider()
+    private var binding: FragmentConferencesBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        vm = ViewModelProvider(this).get(ConferencesViewModel::class.java)
+
+        viewModel = ViewModelProvider(this).get(ConferencesViewModel::class.java)
+
         activity!!.registerReceiver(
-            NewNameBroadcastReceiver(),
-            IntentFilter("NEW_CONFERENCE_NAME"))
+            NewMessageBroadcastReceiver(),
+            IntentFilter("NEW_CONFERENCE_MESSAGE")
+        )
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val v = inflater.inflate(R.layout.fragment_conferences, container, false)
-        pb = v.findViewById(R.id.conferencesPB)
+        binding = FragmentConferencesBinding.inflate(inflater, container, false)
+        return binding!!.root
+    }
 
-        vm.viewModelScope.launch {
-            onProgressBar()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-            val confs = vm.getConferences()
-            val lastMessages = vm.getLastMessages(confs)
-            val rv = v.findViewById<RecyclerView>(R.id.conferencesRV)
+        viewModel.viewModelScope.launch {
+            binding?.conferencesRV?.apply {
 
-            vm.adapter = ConferencesRecyclerViewAdapter(confs, lastMessages) {
-                startActivity(
-                    Intent(activity, ConferenceActivity::class.java)
-                        .putExtra("conference_id", it)
-                )
-            }
-
-            with(rv) {
-                layoutManager = LinearLayoutManager(activity)
-                adapter = vm.adapter
-            }
-
-            conferenceCount = vm.conferenceCount()
-
-            offProgressBar()
-        }
-
-        v.findViewById<ImageButton>(R.id.addConferenceIB).setOnClickListener {
-            startActivity(Intent(activity, CreateConferenceActivity::class.java))
-        }
-
-        val sr = v.findViewById<SwipeRefreshLayout>(R.id.conferenceSR)
-        sr.setColorSchemeResources(R.color.colorAccent)
-        sr.setOnRefreshListener {
-            GlobalScope.launch {
-                refreshList()
-                withContext(Main) {sr.isRefreshing = false}
+                layoutManager =
+                    LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+                
+                this@ConferencesFragment.adapter = ConferencesRecyclerViewAdapter(
+                    viewModel
+                        .getConferences()
+                        .sortedByDescending { it.last_message_time }
+                ) { conferenceID ->
+                    startActivity(
+                        Intent(activity, ConferenceActivity::class.java)
+                            .putExtra("conference_id", conferenceID)
+                    )
+                }
+                adapter = this@ConferencesFragment.adapter
             }
         }
 
-        return v
+        binding?.addConferenceIB?.setOnClickListener(this::onAddConferenceClick)
+
+        binding?.conferenceSR?.apply {
+            setColorSchemeResources(R.color.colorAccent)
+            setOnRefreshListener {
+                CoroutineScope(Main).launch {
+                    updateConferences()
+                    isRefreshing = false
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        if (needRVUpdate) {
-            vm.adapter.notifyDataSetChanged()
-            needRVUpdate = false
-        }
-        GlobalScope.launch {
-            onProgressBar()
-            refreshList()
-            offProgressBar()
+        CoroutineScope(Main).launch {
+            binding?.conferencesPB?.isVisible = true
+            updateConferences()
+            binding?.conferencesPB?.isVisible = false
         }
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
     }
 
-    private suspend fun refreshList() {
+    private fun onAddConferenceClick(v: View) =
+        startActivity(Intent(activity, CreateConferenceActivity::class.java))
+
+
+    private suspend fun updateConferences() {
         try {
-            val r = Server.get(String.format("/conference/getNewConference/?user_id=%s&last_conference_id=%s",
-                activity?.getSharedPreferences("user_info", MODE_PRIVATE)
-                    ?.getInt("user_id", 0),
-                vm.getLastID()))
-            if (r.isSuccessful) {
-                val cs = Gson().fromJson(r.body?.string(), OutputConferenceList::class.java)
-                cs.list.forEach {
-                    vm.addConference(it)
+            val conferences: List<ConferenceEntity> =
+                withContext(IO) {
+                    conferenceProvider
+                        .getAllConferences(activity!!.applicationContext)
+                        .sortedByDescending { it.last_message_time }
+                }
+
+            if (conferences.isEmpty())
+                return
+
+            adapter.apply {
+                this.conferences = conferences
+                notifyDataSetChanged()
+            }
+
+            withContext(IO) {
+                conferences.forEach {
+                    viewModel.addConference(it)
                 }
             }
-
-            while (!vm.adapterIsInitialized()) delay(500)
-
-            if (conferenceCount != vm.conferenceCount()) {
-                vm.updateAdapterConferences()
-                conferenceCount = vm.conferenceCount()
-            }
-            vm.updateAdapterLastMessages()
-            withContext(Main) { vm.adapter.notifyDataSetChanged()}
-        }
-        catch (e: ConnectException) {
-            vm.showToast(activity!!, "Проверьте подключение к сети")
-        }
-        catch (e: SocketTimeoutException) {
-            vm.showToast(activity!!, "Проверьте подключение к сети")
+        } catch (e: ConferencesGettingException) {
+            Snackbar
+                .make(binding?.root!!, "Проверьте подключение к сети", Snackbar.LENGTH_SHORT)
+                .show()
         }
     }
 
-    private suspend fun onProgressBar() = withContext(Main) {
-        pb.visibility = View.VISIBLE
-    }
-
-    private suspend fun offProgressBar() = withContext(Main) {
-        pb.visibility = View.INVISIBLE
-    }
-
-    inner class NewNameBroadcastReceiver: BroadcastReceiver() {
+    private inner class NewMessageBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
-            vm.viewModelScope.launch {
-                vm.updateAdapterConferences()
-                needRVUpdate = true
+            CoroutineScope(Main).launch {
+                if (lifecycle.currentState == Lifecycle.State.RESUMED)
+                    updateConferences()
             }
         }
     }

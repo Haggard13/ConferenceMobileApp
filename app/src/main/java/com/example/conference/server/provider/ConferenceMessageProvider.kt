@@ -13,7 +13,7 @@ class ConferenceMessageProvider {
 
     private val conferenceAPI: ConferenceAPI = ConferenceAPIProvider.conferenceAPI
 
-    fun getNewMessages(
+    suspend fun getNewMessages(
         messengerID: Int,
         lastMessageID: Int,
         context: Context
