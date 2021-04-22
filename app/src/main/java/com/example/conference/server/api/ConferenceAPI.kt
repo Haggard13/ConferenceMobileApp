@@ -110,4 +110,10 @@ interface ConferenceAPI {
 
     @GET("/dialogue/get_all_dialogues")
     fun getAllDialogues(@Query("user_id") userID: Int): Call<List<DialogueEntity>>
+
+    @Multipart
+    @POST("/conference/create_new_conference")
+    fun createNewConference(@Part("conference") conference: RequestBody,
+                            @Part("members") members: RequestBody
+    ): Call<Boolean>
 }

@@ -60,15 +60,7 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                         return@launch
                     notifyNewMessage(p0)
                 }
-            "conference" ->
-                CoroutineScope(Main).launch {
-                    notifyNewConference(p0)
-                }
         }
-    }
-
-    private fun notifyNewConference(p0: RemoteMessage) {
-        TODO("Not yet implemented")
     }
 
     private suspend fun notifyNewMessage(p0: RemoteMessage) {
