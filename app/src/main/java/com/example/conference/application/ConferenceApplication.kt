@@ -7,8 +7,8 @@ import com.example.conference.activity.ConferenceActivity
 import com.example.conference.activity.DialogueActivity
 
 class ConferenceApplication: Application(), Application.ActivityLifecycleCallbacks {
-    var conference_id = 0
-    var dialogue_id = 0
+    var conferenceID = 0
+    var dialogueID = 0
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
     }
@@ -18,10 +18,10 @@ class ConferenceApplication: Application(), Application.ActivityLifecycleCallbac
 
     override fun onActivityResumed(activity: Activity) {
         if (activity is DialogueActivity) {
-            dialogue_id = activity.vm.dialogueID
+            dialogueID = activity.viewModel.dialogueID
         }
         else if (activity is ConferenceActivity) {
-            conference_id = activity.viewModel.conferenceID
+            conferenceID = activity.viewModel.conferenceID
         }
     }
 

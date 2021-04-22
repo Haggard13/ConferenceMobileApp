@@ -47,6 +47,7 @@ class DialogueMessageSender : MessageSender() {
             when(e) {
                 is ConnectException, is SocketTimeoutException, is SocketException ->
                     throw SendMessageException()
+                else -> throw e
             }
         }
     }

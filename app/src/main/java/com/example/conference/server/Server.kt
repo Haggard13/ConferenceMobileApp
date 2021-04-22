@@ -4,9 +4,7 @@ import android.content.Context
 import com.example.conference.account.Account
 import com.example.conference.db.data.MessageType
 import com.example.conference.db.data.SenderEnum
-import com.example.conference.db.entity.DMessageEntity
 import com.example.conference.exception.SendMessageException
-import com.example.conference.file.Addition
 import com.example.conference.json.CMessageList
 import com.example.conference.json.ConferenceMessageWithoutID
 import com.google.gson.Gson
@@ -17,7 +15,6 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
-import java.net.URLEncoder
 import java.util.*
 
 
@@ -33,26 +30,6 @@ object Server {
         ).build()
         val request = Request.Builder().url("$baseURL$url").build()
         return client.newCall(request).execute()
-    }
-
-    fun sendNewUserAvatar(user_id: Int, file: ByteArray): Int {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "$user_id.png",
-                file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url("$baseURL/user/avatar/upload")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        val response = client.newCall(request).execute()
-        return if (!response.isSuccessful) {
-            -1
-        } else
-            1
     }
 
     fun sendNewConferenceAvatar(conference_id: Int, file: ByteArray): Int {
@@ -73,87 +50,6 @@ object Server {
             -1
         } else
             1
-    }
-
-    fun sendDialogueMessagePhoto(
-        file: ByteArray?,
-        DMessageEntity: DMessageEntity
-    ): Response {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "file.png",
-                file!!.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url(
-                baseURL +
-                    "/dialogue/sendPhotography" +
-                    "/${URLEncoder.encode(DMessageEntity.text, "UTF-8")}" +
-                    "/${DMessageEntity.dialogue_id}" +
-                    "/${DMessageEntity.date_time}" +
-                    "/${DMessageEntity.sender_id}" +
-                    "/${DMessageEntity.sender_name}" +
-                    "/${DMessageEntity.sender_surname}")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        return client.newCall(request).execute()
-    }
-
-    fun sendDialogueMessageAudio(
-        file: ByteArray?,
-        DMessageEntity: DMessageEntity
-    ): Response {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "file.3gp",
-                file!!.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url(
-                baseURL +
-                        "/dialogue/sendAudioMessage" +
-                        "/${URLEncoder.encode(DMessageEntity.text, "UTF-8")}" +
-                        "/${DMessageEntity.dialogue_id}" +
-                        "/${DMessageEntity.date_time}" +
-                        "/${DMessageEntity.sender_id}" +
-                        "/${DMessageEntity.sender_name}" +
-                        "/${DMessageEntity.sender_surname}")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        return client.newCall(request).execute()
-    }
-
-    fun sendDialogueFile(
-        addition: Addition?,
-        DMessageEntity: DMessageEntity,
-    ): Response {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", addition!!.name,
-                addition.file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, addition.file.size)
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url(
-                baseURL +
-                        "/dialogue/sendFile" +
-                        "/${URLEncoder.encode(DMessageEntity.text, "UTF-8")}" +
-                        "/${DMessageEntity.dialogue_id}" +
-                        "/${DMessageEntity.date_time}" +
-                        "/${DMessageEntity.sender_id}" +
-                        "/${DMessageEntity.sender_name}" +
-                        "/${DMessageEntity.sender_surname}")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        return client.newCall(request).execute()
     }
 
     fun sendMeetChatTextMessage(
@@ -234,21 +130,5 @@ object Server {
         } catch (e: SocketTimeoutException) {
         }
         return CMessageList()
-    }
-
-    fun checkNewConferenceMessages(conferenceID: Int, lastMessageID: Int): Boolean {
-        try {
-            val response = get("/conference/check_new_messages/" +
-                    "?conference_id=$conferenceID&last_message_id=$lastMessageID")
-            return if (!response.isSuccessful) {
-                false
-            } else {
-                response.body?.string().toBoolean()
-            }
-        } catch(e: SocketException) {
-        } catch (e: ConnectException) {
-        } catch (e: SocketTimeoutException) {
-        }
-        return false
     }
 }

@@ -83,8 +83,7 @@ class ConferenceActivity : AppCompatActivity() {
         FirebaseMessaging.getInstance().subscribeToTopic(viewModel.conferenceID.toString())
 
         CoroutineScope(Main).launch {
-            val conferenceName: String = withContext(IO) { viewModel.getConference().name }
-            conference_name_tv.text = conferenceName
+            conference_name_tv.text = withContext(IO) { viewModel.getConference().name }
             conference_messages_rv.layoutManager = LinearLayoutManager(
                 this@ConferenceActivity,
                 LinearLayoutManager.VERTICAL,
@@ -121,7 +120,7 @@ class ConferenceActivity : AppCompatActivity() {
         GlobalScope.launch {
             while (checkingNewMessagesIsPossible) {
                 if (adapterIsInitialized) {
-                    val newMessages: Boolean = Server.checkNewConferenceMessages(
+                    val newMessages: Boolean = messageProvider.checkNewConferenceMessages(
                         viewModel.conferenceID,
                         viewModel.getLastMessageID()
                     )
@@ -132,13 +131,13 @@ class ConferenceActivity : AppCompatActivity() {
                 }
             }
         }
-        (applicationContext as ConferenceApplication).conference_id = viewModel.conferenceID
+        (applicationContext as ConferenceApplication).conferenceID = viewModel.conferenceID
     }
 
     override fun onPause() {
         super.onPause()
         checkingNewMessagesIsPossible = false
-        (applicationContext as ConferenceApplication).conference_id = 0
+        (applicationContext as ConferenceApplication).conferenceID = 0
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

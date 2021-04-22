@@ -13,7 +13,7 @@ class ConferenceMessageProvider {
 
     private val conferenceAPI: ConferenceAPI = ConferenceAPIProvider.conferenceAPI
 
-    suspend fun getNewMessages(
+    fun getNewMessages(
         messengerID: Int,
         lastMessageID: Int,
         context: Context
@@ -24,10 +24,29 @@ class ConferenceMessageProvider {
                 .getNewConferenceMessages(messengerID, lastMessageID, account.userID)
                 .execute()
                 .body()
-        } catch (e: SocketException) {
-        } catch (e: ConnectException) {
-        } catch (e: SocketTimeoutException) {
+        } catch (e: Exception) {
+            when (e) {
+                is ConnectException, is SocketException, is SocketTimeoutException ->
+                    return null
+                else ->
+                    throw e
+            }
         }
-        return null
+    }
+
+    fun checkNewConferenceMessages(conferenceID: Int, lastMessageID: Int): Boolean {
+        try {
+            return conferenceAPI
+                .checkNewConferenceMessages(conferenceID, lastMessageID)
+                .execute()
+                .body()?: false
+        } catch (e: Exception) {
+            when (e) {
+                is ConnectException, is SocketException, is SocketTimeoutException ->
+                    return false
+                else ->
+                    throw e
+            }
+        }
     }
 }

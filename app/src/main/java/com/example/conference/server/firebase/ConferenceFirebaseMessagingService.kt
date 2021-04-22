@@ -3,6 +3,7 @@ package com.example.conference.server.firebase
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build.VERSION.SDK_INT
@@ -14,21 +15,31 @@ import androidx.core.app.Person
 import androidx.core.graphics.drawable.IconCompat
 import com.example.conference.R
 import com.example.conference.account.Account
+import com.example.conference.activity.ConferenceActivity
+import com.example.conference.activity.DialogueActivity
+import com.example.conference.application.ConferenceApplication
 import com.example.conference.server.Server
+import com.example.conference.server.api.ConferenceAPIProvider
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.squareup.picasso.Picasso
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(p0: String) {
-        GlobalScope.launch {
-            //ConferenceAPIProvider.conferenceAPI.sendFirebaseMessagingToken(p0).execute() //fixme
+        CoroutineScope(IO).launch {
+            try {
+                ConferenceAPIProvider.conferenceAPI
+                    .sendFirebaseMessagingToken(
+                        tokenWithID =
+                        "${Account(this@ConferenceFirebaseMessagingService).userID} $p0"
+                    ).execute()
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -38,11 +49,15 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
             "cmessage" ->
                 CoroutineScope(Main).launch {
                     sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
+                    if ((application as ConferenceApplication).conferenceID == p0.data["id"]!!.toInt())
+                        return@launch
                     notifyNewMessage(p0)
                 }
             "dmessage" ->
                 CoroutineScope(Main).launch {
                     sendBroadcast(Intent("NEW_DIALOGUE_MESSAGE"))
+                    if ((application as ConferenceApplication).dialogueID == p0.data["id"]!!.toInt())
+                        return@launch
                     notifyNewMessage(p0)
                 }
             "conference" ->
@@ -50,7 +65,6 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                     notifyNewConference(p0)
                 }
         }
-
     }
 
     private fun notifyNewConference(p0: RemoteMessage) {
@@ -61,17 +75,29 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
         val notificationType = p0.data["notification_type"]
         val id = p0.data["id"]!!.toInt()
 
-        if (p0.data["senderID"]!!.toInt() == Account(this).userID) return
+        if (p0.data["senderID"]!!.toInt() == Account(this).userID) {
+            return
+        }
 
         val nManager = NotificationManagerCompat
             .from(this)
 
         val avatar = getAvatar(notificationType == "cmessage", id)
+        val intent =
+            Intent(this,
+                if (notificationType == "cmessage")
+                    ConferenceActivity::class.java
+                else
+                    DialogueActivity::class.java
+            )
+        intent.putExtra(if (notificationType == "cmessage") "conference_id" else "dialogue_id", id)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
 
         val n: Notification =
             if (SDK_INT >= O) {
                 val channel: NotificationChannel =
                     createChannel(notificationType == "cmessage")
+
                 nManager.createNotificationChannel(channel)
 
                 NotificationCompat.Builder(
@@ -82,6 +108,8 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                 NotificationCompat.Builder(this@ConferenceFirebaseMessagingService)
             }
                 .setMessagingStyle(p0, avatar)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
                 .build()
 
         nManager.notify(id, n)

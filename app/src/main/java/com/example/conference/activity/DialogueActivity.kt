@@ -5,264 +5,295 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.PopupMenu
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
+import com.example.conference.adapter.DialogueRecyclerViewAdapter
 import com.example.conference.application.ConferenceApplication
+import com.example.conference.databinding.ActivityDialogueBinding
+import com.example.conference.db.data.MessageType
 import com.example.conference.db.entity.DMessageEntity
-import com.example.conference.exception.LoadFileException
 import com.example.conference.exception.LoadImageException
 import com.example.conference.exception.SendMessageException
+import com.example.conference.file.Addition
 import com.example.conference.server.Server
+import com.example.conference.server.provider.DialogueMessageProvider
+import com.example.conference.server.sender.DialogueMessageSender
 import com.example.conference.vm.DialogueViewModel
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.android.synthetic.main.activity_conference.*
 import kotlinx.android.synthetic.main.activity_dialogue.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
+import okhttp3.Response
 import java.io.File
 import java.io.IOException
 import java.net.ConnectException
+import java.net.SocketException
 import java.net.SocketTimeoutException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
-import com.example.conference.file.Addition as MyFile
 
 class DialogueActivity : AppCompatActivity() {
-    lateinit var vm: DialogueViewModel
-    private var updatePossible = false
-    private var photo: ByteArray? = null
-    private var audio: ByteArray? = null
-    private var file: MyFile? = null
-    private var messageType = MESSAGE_WITH_TEXT
+    private companion object {
+        const val PHOTO_LOADING = 0
+        const val FILE_LOADING = 1
+    }
+
+    private val messageSender = DialogueMessageSender()
+    private val messageProvider = DialogueMessageProvider()
+    private var checkingNewMessagesIsPossible = false
+    private var addition: Addition? = null
+    private var messageType = MessageType.TEXT_MESSAGE
+    private var adapterIsInitialized = false
+    private lateinit var binding: ActivityDialogueBinding
+    lateinit var viewModel: DialogueViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_dialogue)
+        binding = ActivityDialogueBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        vm = ViewModelProvider(this).get(DialogueViewModel::class.java)
-        vm.dialogueID = intent.getIntExtra("dialogue_id", -1)
+        viewModel = ViewModelProvider(this).get(DialogueViewModel::class.java)
+        viewModel.dialogueID = intent.getIntExtra("dialogue_id", -1)
 
-        vm.viewModelScope.launch {
-            companion_name_tv.text = vm.getDialogue().second_user_name
-            vm.initMessages()
-            vm.initAdapter(this@DialogueActivity)
-            dialogue_messages_rv.layoutManager = LinearLayoutManager(this@DialogueActivity, LinearLayoutManager.VERTICAL, true)
-            dialogue_messages_rv.adapter = vm.adapter
+        FirebaseMessaging.getInstance().subscribeToTopic(viewModel.dialogueID.toString())
+
+        CoroutineScope(Main).launch {
+            binding.companionNameTv.text = withContext(IO) {
+                viewModel.getDialogue().second_user_name
+            }
+            binding.dialogueMessagesRv.layoutManager = LinearLayoutManager(
+                this@DialogueActivity,
+                LinearLayoutManager.VERTICAL,
+                true
+            )
+            val messages: List<DMessageEntity> =
+                withContext(IO) {
+                    val newMessages: List<DMessageEntity> =
+                        messageProvider.getNewMessages(
+                            viewModel.dialogueID,
+                            viewModel.getLastMessageID(),
+                            context = this@DialogueActivity
+                    ) ?: ArrayList()
+                    newMessages.forEach { viewModel.saveMessageInDataBase(it) }
+                    viewModel.getMessages()
+                }
+            binding.dialogueMessagesRv.adapter = DialogueRecyclerViewAdapter(
+                messages,
+                context = this@DialogueActivity,
+                this@DialogueActivity::callbackForPhoto,
+                this@DialogueActivity::callbackForFile
+            )
+            adapterIsInitialized = true
         }
-
-        dialogue_add_file_ib.setOnClickListener(this::onAddFileClick)
-        dialogue_back_ib.setOnClickListener { finish() }
     }
 
     override fun onResume() {
         super.onResume()
-        updatePossible = true
+        checkingNewMessagesIsPossible = true
         GlobalScope.launch {
-            while (updatePossible) {
-                if (vm.messagesIsInitialize()) {
-                    vm.updateMessages()
+            while (checkingNewMessagesIsPossible) {
+                if (adapterIsInitialized) {
+                    val newMessages: Boolean = messageProvider.checkNewDialogueMessages(
+                        viewModel.dialogueID,
+                        viewModel.getLastMessageID()
+                    )
+                    if (newMessages) {
+                        withContext(Main) { updateRecyclerView() }
+                    }
+                    delay(5 * 1000)
                 }
-                delay(5 * 1000)
             }
         }
-        (applicationContext as ConferenceApplication).dialogue_id = vm.dialogueID
+        (applicationContext as ConferenceApplication).dialogueID = viewModel.dialogueID
     }
 
     override fun onPause() {
         super.onPause()
-        updatePossible = false
-        (applicationContext as ConferenceApplication).dialogue_id = 0
+        checkingNewMessagesIsPossible = false
+        (applicationContext as ConferenceApplication).dialogueID = 0
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == PHOTOGRAPHY_LOAD && resultCode == RESULT_OK) {
-            vm.viewModelScope.launch {
+        if (resultCode == RESULT_OK) {
+            viewModel.viewModelScope.launch {
                 try {
-                    val imageUri = data?.data ?: throw LoadImageException()
-                    val fileStream = contentResolver.openInputStream(imageUri)
-                    photo = fileStream!!.readBytes()
-                    messageType = MESSAGE_WITH_PHOTO
-                    dialogue_add_file_ib.setImageResource(R.drawable.outline_photo_camera_24)
-                    dialogue_add_file_ib.isEnabled = false
+                    val additionUri = data?.data ?: throw LoadImageException()
+                    val fileStream = contentResolver.openInputStream(additionUri)
+                    when (requestCode) {
+                        FILE_LOADING -> {
+                            addition =
+                                Addition(
+                                    fileStream!!.readBytes(),
+                                    File(additionUri.path!!).name
+                                )
+                            messageType = MessageType.MESSAGE_WITH_FILE
+                            binding.dialogueAddFileIb.setImageResource(R.drawable.outline_upload_file_24)
+                        }
+
+                        PHOTO_LOADING -> {
+                            addition = Addition(
+                                fileStream!!.readBytes(),
+                                "photo"
+                            )
+                            messageType = MessageType.MESSAGE_WITH_PHOTO
+                            binding.dialogueAddFileIb.setImageResource(R.drawable.outline_photo_camera_24)
+                        }
+                    }
+                    binding.dialogueAddFileIb.isEnabled = false
                 } catch (e: IOException) {
-                    vm.showToast("Не удалось загрузить изображение")
-                }
-            }
-        } else if (requestCode == FILE_LOAD && resultCode == RESULT_OK) {
-            vm.viewModelScope.launch {
-                try {
-                    val fileUri = data?.data ?: throw LoadFileException()
-                    val fileStream = contentResolver.openInputStream(fileUri)
-                    file = MyFile(fileStream!!.readBytes(), File(fileUri.path!!).name)
-                    messageType = MESSAGE_WITH_FILE
-                    dialogue_add_file_ib.setImageResource(R.drawable.outline_upload_file_24)
-                    dialogue_add_file_ib.isEnabled = false
-                } catch (e: IOException) {
-                    vm.showToast("Не удалось загрузить файл")
+                    showToast("Не удалось загрузить вложение")
                 }
             }
         }
     }
 
-    private fun onAddFileClick(v: View) = showPopupMenu(v)
+    fun onSendMessageButtonClick(v: View) {
+        binding.dialogueMessageSendingPb.isVisible = true
 
-    private fun onEnterMessageButtonClick(v: View) {
-        var messageText = dialogue_message_et.text.toString()
-        if (messageText.isBlank() && messageType != MESSAGE_WITH_AUDIO
-            && messageType != MESSAGE_WITH_FILE)
-            return
-
-        messageText = messageText.trim()
-        val date = Date().time
-
-        GlobalScope.launch {
-            val sendingResult = sendMessage(messageText, date)
-
-            if (sendingResult != null) {
-                vm.saveMessage(sendingResult)
-                vm.updateRV()
-                withContext(Dispatchers.Main) {
-                    if (messageType != MESSAGE_WITH_AUDIO && messageType != MESSAGE_WITH_FILE)
-                        dialogue_message_et.setText("")
-                }
-                messageType = MESSAGE_WITH_TEXT
-            } else if (messageType == MESSAGE_WITH_AUDIO || messageType == MESSAGE_WITH_FILE) {
-                messageType = MESSAGE_WITH_TEXT
-            }
-        }
+        CoroutineScope(Main).launch { sendMessage() }
     }
 
-    private suspend fun sendMessage(messageText: String, date: Long): DMessageEntity? {
-        var message: DMessageEntity? = null
+    fun onAddFileClick(v: View) = showPopupMenu(v)
 
+    fun onBackClick(v: View) = finish()
+
+    private suspend fun sendMessage() {
+        val messageText = binding.dialogueMessageEt.text.toString().trim()
         try {
             when(messageType) {
-                MESSAGE_WITH_PHOTO -> {
-                    val r = Server.sendDialogueMessagePhoto(
-                        photo,
-                        vm.createDMessageEntity(0, messageText, date,2)
-                    )
-                    if (!r.isSuccessful)
-                        throw SendMessageException()
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw LoadImageException()
-                    message = vm.createDMessageEntity(
-                        r.headers["message_id"]!!.toInt(),
-                        messageText,
-                        date,
-                        2
-                    )
-                }
-                MESSAGE_WITH_AUDIO -> {
-                    val r = Server.sendDialogueMessageAudio(audio,
-                        vm.createDMessageEntity(0,"Аудиосообщение", date, 3))
-                    if (!r.isSuccessful)
-                        throw SendMessageException()
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw SendMessageException()
-                    message = vm.createDMessageEntity(
-                        r.headers["message_id"]!!.toInt(),
-                        "",
-                        date,
-                        3
-                    )
-                }
-                MESSAGE_WITH_TEXT -> {
-                    val r = Server.get(vm.generateURL(messageText, date))
-                    if (!r.isSuccessful) {
-                        throw SendMessageException()
+                MessageType.TEXT_MESSAGE -> {
+                    if (messageText.isEmpty()) {
+                        binding.dialogueMessageSendingPb.isVisible = false
+                        return
                     }
-                    val messageId = r.body!!.string().toInt()
-                    if (messageId == -1) {
-                        throw SendMessageException()
+                    withContext(IO) {
+                        messageSender.sendTextMessage(
+                            context = this@DialogueActivity,
+                            messageText,
+                            viewModel.dialogueID
+                        )
                     }
-                    message = vm.createDMessageEntity(messageId, messageText, date,  1)
                 }
-                MESSAGE_WITH_FILE -> {
-                    val r = Server.sendDialogueFile(file,
-                    vm.createDMessageEntity(0, file!!.name, date, 4))
-                    if (!r.isSuccessful)
-                        throw SendMessageException()
-                    if (r.headers["message_id"]?.toInt() == -1)
-                        throw SendMessageException()
-                    message = vm.createDMessageEntity(
-                        r.headers["message_id"]!!.toInt(),
-                        messageText,
-                        date,
-                        4
-                    )
+                MessageType.MESSAGE_WITH_PHOTO -> {
+                    withContext(IO) {
+                        messageSender.sendMessageWithPhoto(
+                            context = this@DialogueActivity,
+                            photo = addition!!.file,
+                            messageText,
+                            viewModel.dialogueID
+                        )
+                    }
+                }
+                MessageType.AUDIO_MESSAGE ->
+                    withContext(IO) {
+                        messageSender.sendAudioMessage(
+                            context = this@DialogueActivity,
+                            audio = addition!!.file,
+                            viewModel.dialogueID
+                        )
+                    }
+
+                MessageType.MESSAGE_WITH_FILE -> {
+                    withContext(IO) {
+                        messageSender.sendMessageWithFile(
+                            context = this@DialogueActivity,
+                            addition!!,
+                            viewModel.dialogueID
+                        )
+                    }
                 }
             }
-            vm.updateMessages()
-            photo = null
-            audio = null
-            withContext(Dispatchers.Main) {
-                dialogue_add_file_ib.setImageResource(R.drawable.outline_add_24)
-                dialogue_add_file_ib.isEnabled = true
+            addition = null
+            messageType = MessageType.TEXT_MESSAGE
+            if (messageType == MessageType.TEXT_MESSAGE || messageType == MessageType.MESSAGE_WITH_PHOTO) {
+                binding.dialogueMessageEt.setText("")
+            }
+
+            updateRecyclerView()
+
+            binding.dialogueAddFileIb.apply {
+                setImageResource(R.drawable.outline_add_24)
+                isEnabled = true
             }
         } catch (e: SendMessageException) {
-            vm.showToast("Ошибка отправки")
-        } catch (e: ConnectException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: SocketTimeoutException) {
-            vm.showToast("Проверьте подключение к сети")
-        } catch (e: LoadImageException) {
-            vm.showToast("Не удалось отправить фотографию")
+            val sendingErrorSnackBar = Snackbar.make(
+                binding.dialogueMessagesRv,
+                "Произошла ошибка",
+                Snackbar.LENGTH_SHORT
+            )
+            sendingErrorSnackBar.setAction("Повторить", this::onSendMessageButtonClick)
+            sendingErrorSnackBar.show()
         }
-        return message
+        binding.dialogueMessageSendingPb.isVisible = false
     }
 
     private fun loadPhoto() {
         val pickIntent = Intent(Intent.ACTION_PICK)
         pickIntent.type = "image/*"
-        startActivityForResult(pickIntent, PHOTOGRAPHY_LOAD)
+        startActivityForResult(pickIntent, 0)
     }
 
     private fun loadFile() {
         val pickIntent = Intent(Intent.ACTION_PICK)
         pickIntent.type = "*/*"
-        startActivityForResult(pickIntent, FILE_LOAD)
+        startActivityForResult(pickIntent, FILE_LOADING)
     }
 
     private fun recordAudioMessage() {
         if (checkPermission()) {
-            val mr = getMediaRecorder()
+            val mediaRecorder = getMediaRecorder()
             val path =
                 "${Environment.getExternalStorageDirectory().absolutePath}/${Date().time}.3gp"
-            mr.setOutputFile(path)
+            mediaRecorder.setOutputFile(path)
             try {
-                mr.prepare()
-                mr.start()
+                mediaRecorder.prepare()
+                mediaRecorder.start()
                 setAudioRecordAnimation()
-                dialogue_message_et.isEnabled = false
-                dialogue_add_file_ib.isEnabled = false
-                dialogue_send_message_btn.setOnClickListener { v ->
-                    GlobalScope.launch {
-                        mr.stop()
-                        val fileStream =
-                            contentResolver.openInputStream(Uri.fromFile(File(path)) )
-                        audio = fileStream!!.readBytes()
-                        messageType = MESSAGE_WITH_AUDIO
-                        withContext(Dispatchers.Main) {
-                            with(dialogue_message_et) {
-                                isEnabled = true
-                                hint = "Введите сообщение..."
-                                clearAnimation()
+                binding.apply {
+                    dialogueMessageEt.isEnabled = false
+                    dialogueAddFileIb.isEnabled = false
+                    dialogueSendMessageBtn.setOnClickListener { v ->
+                        GlobalScope.launch {
+                            mediaRecorder.stop()
+                            val fileStream =
+                                contentResolver.openInputStream(Uri.fromFile(File(path)))
+                            addition = Addition(
+                                fileStream!!.readBytes(),
+                                "audio_message"
+                            )
+                            messageType = MessageType.AUDIO_MESSAGE
+                            withContext(Main) {
+                                binding.dialogueMessageEt.apply {
+                                    isEnabled = true
+                                    hint = "Введите сообщение..."
+                                    clearAnimation()
+                                }
+
+                                binding.dialogueAddFileIb.isEnabled = true
+
+                                v.setOnClickListener(this@DialogueActivity::onSendMessageButtonClick)
+                                onSendMessageButtonClick(v)
                             }
-
-                            dialogue_add_file_ib.isEnabled = true
-
-                            v.setOnClickListener(this@DialogueActivity::onEnterMessageButtonClick)
-                            onEnterMessageButtonClick(v)
                         }
                     }
                 }
@@ -273,35 +304,20 @@ class DialogueActivity : AppCompatActivity() {
     }
 
     private fun getMediaRecorder(): MediaRecorder {
-        val mr = MediaRecorder()
-        mr.setAudioSource(MediaRecorder.AudioSource.MIC)
-        mr.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
-        mr.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB)
-        return mr
+        return MediaRecorder().apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+            setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB)
+        }
     }
 
     private fun setAudioRecordAnimation() {
-        val a = AnimationUtils.loadAnimation(
+        val animation = AnimationUtils.loadAnimation(
             this, R.anim.audio_recording_anim
         )
-        a.repeatMode = Animation.REVERSE
-        a.repeatCount = Animation.INFINITE
-        dialogue_message_et.startAnimation(a)
-    }
-
-    private fun checkPermission() =
-        ContextCompat.checkSelfPermission(this,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED &&
-                ContextCompat.checkSelfPermission(this,
-                    Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED
-
-    private fun requestPermission() {
-        ActivityCompat.requestPermissions(this, arrayOf(
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.RECORD_AUDIO
-        ), 1)
+        animation.repeatMode = Animation.REVERSE
+        animation.repeatCount = Animation.INFINITE
+        binding.dialogueMessageEt.startAnimation(animation)
     }
 
     private fun showPopupMenu(v: View) {
@@ -331,13 +347,71 @@ class DialogueActivity : AppCompatActivity() {
         popupMenu.show()
     }
 
-    companion object {
-        const val PHOTOGRAPHY_LOAD = 0
-        const val FILE_LOAD = 5
+    private fun checkPermission() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 
-        const val MESSAGE_WITH_TEXT = 1
-        const val MESSAGE_WITH_PHOTO = 2
-        const val MESSAGE_WITH_AUDIO = 3
-        const val MESSAGE_WITH_FILE = 4
+    private fun requestPermission() {
+        ActivityCompat.requestPermissions(this, arrayOf(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.RECORD_AUDIO
+        ), 1)
     }
+
+    private suspend fun updateRecyclerView() {
+
+        val messages: List<DMessageEntity>? = withContext(IO) {
+            messageProvider.getNewMessages(
+                viewModel.dialogueID,
+                viewModel.getLastMessageID(),
+                applicationContext
+            )
+        }
+        messages?: return
+        withContext(IO) {
+            messages.forEach { viewModel.saveMessageInDataBase(it) }
+        }
+        (binding.dialogueMessagesRv.adapter as DialogueRecyclerViewAdapter).messages =
+            withContext(IO) { viewModel.getMessages() }
+
+        binding.dialogueMessagesRv.adapter?.notifyDataSetChanged()
+
+    }
+
+    private fun callbackForPhoto(id: Int) {
+        val intent = Intent(this, PhotoReviewerActivity::class.java)
+        intent.putExtra("photo_id", id)
+        intent.putExtra("is_conference", true)
+        startActivity(intent)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun callbackForFile(id: Int, name: String) {
+        GlobalScope.launch {
+            try {
+                val response: Response = Server.get("/dialogue/getFile/?id=$id")
+
+                response.body!!.byteStream().use {
+                    Files.write(
+                        Paths.get(
+                            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)!!.path +
+                                    "/$name"
+                        ), it.readBytes()
+                    )
+                }
+                showToast("Файл сохранен на устройство")
+            } catch (e: SocketTimeoutException) {
+                showToast("Возникла ошибка при скачивании")
+            } catch (e: ConnectException) {
+                showToast("Возникла ошибка при скачивании")
+            } catch (e: SocketException) {
+                showToast("Возникла ошибка при скачивании")
+            }
+        }
+    }
+
+    suspend fun showToast(text: String) =
+        withContext(Main) {
+            Toast.makeText(this@DialogueActivity, text, Toast.LENGTH_LONG).show()
+        }
 }

@@ -41,7 +41,7 @@ class DialoguesRecyclerViewAdapter(
                 .into(binding.groupAvatarImage)
             binding.apply{
                 groupNameTV.text = (dialogue.second_user_name + " " + dialogues[position].second_user_surname)
-                lastMessageTimeTV.text = dialogue.last_message
+                groupLastMessageTV.text = dialogue.last_message
                 lastMessageTimeTV.text = dialogue.last_message_time.toTime()
                 root.setOnClickListener {
                     callback.invoke(dialogue.id)

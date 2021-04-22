@@ -15,9 +15,9 @@ class ConferenceViewModel(val app: Application) : AndroidViewModel(app) {
     lateinit var adapter: ConferenceRecyclerViewAdapter
     var conferenceID by Delegates.notNull<Int>()
 
-    suspend fun getMessages(): List<CMessageEntity> = cMessageDao.getMessages(conferenceID)
-
     suspend fun getConference(): ConferenceEntity = conferenceDao.getConference(conferenceID)[0]
+
+    suspend fun getMessages(): List<CMessageEntity> = cMessageDao.getMessages(conferenceID)
 
     suspend fun getLastMessageID() =
         if (cMessageDao.getMessagesCount(conferenceID) != 0)

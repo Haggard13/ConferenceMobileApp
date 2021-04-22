@@ -11,4 +11,5 @@ class Account(private val context: Context) {
     val userID = sharedPreferences.getInt("user_id", 0)
     val userName = sharedPreferences.getString("user_name", "")
     val userSurname = sharedPreferences.getString("user_surname", "")
+    val userEmail = sharedPreferences.getString("user_email", "")
 }

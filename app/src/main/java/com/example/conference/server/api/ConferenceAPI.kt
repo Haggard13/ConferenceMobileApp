@@ -43,6 +43,12 @@ interface ConferenceAPI {
         @Query("last_message_id") lastMessageID: Int,
         @Query("user_id") userID: Int
     ): Call<List<CMessageEntity>>
+
+    @GET("/conference/check_new_messages/")
+    fun checkNewConferenceMessages(
+        @Query("conference_id") conferenceID: Int,
+        @Query("last_message_id") lastMessageID: Int
+    ): Call<Boolean>
     //endregion
 
     //region Dialogue Messaging
@@ -79,14 +85,24 @@ interface ConferenceAPI {
         @Query("last_message_id") lastMessageID: Int,
         @Query("user_id") userID: Int
     ): Call<List<DMessageEntity>>
+
+    @GET("/dialogue/check_new_messages/")
+    fun checkNewDialogueMessages(
+        @Query("dialogue_id") dialogueID: Int,
+        @Query("last_message_id") lastMessageID: Int
+    ): Call<Boolean>
     //endregion
 
     //region Users
     @POST("/user/send_firebase_messaging_token")
-    fun sendFirebaseMessagingToken(@Body token: String): Call<ResponseBody>
+    fun sendFirebaseMessagingToken(@Body tokenWithID: String): Call<ResponseBody>
 
     @GET("/user/get_user_info")
     fun getUserInfo(@Query("email") email: String): Call<ContactEntity>
+
+    @Multipart
+    @POST("/user/avatar/upload")
+    fun changeUserAvatar(@Part photo: MultipartBody.Part): Call<ResponseBody>
     //endregion
 
     @GET("/conference/get_all_conferences")

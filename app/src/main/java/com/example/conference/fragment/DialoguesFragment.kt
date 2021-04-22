@@ -20,7 +20,7 @@ import com.example.conference.activity.DialogueActivity
 import com.example.conference.adapter.DialoguesRecyclerViewAdapter
 import com.example.conference.databinding.FragmentDialoguesBinding
 import com.example.conference.db.entity.DialogueEntity
-import com.example.conference.exception.ConferencesGettingException
+import com.example.conference.exception.DialoguesGettingException
 import com.example.conference.server.provider.DialogueProvider
 import com.example.conference.vm.DialoguesViewModel
 import com.google.android.material.snackbar.Snackbar
@@ -42,7 +42,7 @@ class DialoguesFragment : Fragment() {
 
         activity!!.registerReceiver(
             NewMessageBroadcastReceiver(),
-            IntentFilter("NEW_CONFERENCE_MESSAGE")
+            IntentFilter("NEW_DIALOGUE_MESSAGE")
         )
     }
 
@@ -67,7 +67,7 @@ class DialoguesFragment : Fragment() {
                 ) { dialogueID ->
                     startActivity(
                         Intent(activity, DialogueActivity::class.java)
-                            .putExtra("conference_id", dialogueID)
+                            .putExtra("dialogue_id", dialogueID)
                     )
                 }
                 adapter = this@DialoguesFragment.adapter
@@ -127,7 +127,7 @@ class DialoguesFragment : Fragment() {
                     viewModel.addDialogue(it)
                 }
             }
-        } catch (e: ConferencesGettingException) {
+        } catch (e: DialoguesGettingException) {
             Snackbar
                 .make(binding?.root!!, "Проверьте подключение к сети", Snackbar.LENGTH_SHORT)
                 .show()

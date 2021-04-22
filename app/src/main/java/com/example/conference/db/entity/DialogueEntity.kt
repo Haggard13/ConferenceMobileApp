@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 data class DialogueEntity (
     @PrimaryKey
     var id: Int,
+
     var second_user_id: Int,
     var second_user_name: String,
     var second_user_surname: String,

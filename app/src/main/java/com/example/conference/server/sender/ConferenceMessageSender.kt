@@ -43,7 +43,7 @@ class ConferenceMessageSender: MessageSender() {
                 .body()?: -1
             if (messageID == -1)
                 throw SendMessageException()
-        } catch(e: Exception) {
+        } catch (e: Exception) {
             when(e) {
                 is ConnectException, is SocketException, is SocketTimeoutException ->
                     throw SendMessageException()

@@ -4,10 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.conference.R
+import com.example.conference.account.Account
+import com.example.conference.server.api.ConferenceAPIProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import java.util.*
 
@@ -29,6 +32,20 @@ class StartActivity : AppCompatActivity() {
             FirebaseMessaging.getInstance().run {
                 subscribeToTopic("conference")
                 subscribeToTopic("dialogue")
+            }
+            FirebaseMessaging.getInstance().token.addOnCompleteListener {
+                if (it.isSuccessful) {
+                    CoroutineScope(IO).launch {
+                        try {
+                            ConferenceAPIProvider.conferenceAPI
+                                .sendFirebaseMessagingToken(
+                                    "${Account(this@StartActivity.applicationContext).userID} ${it.result}"
+                                ).execute()
+                        } catch (e: Exception) {
+                            //throw e
+                        }
+                    }
+                }
             }
 
             val currentUser: FirebaseUser? = auth.currentUser
