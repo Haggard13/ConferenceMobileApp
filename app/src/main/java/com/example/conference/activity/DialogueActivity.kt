@@ -74,7 +74,8 @@ class DialogueActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this).get(DialogueViewModel::class.java)
         viewModel.dialogueID = intent.getIntExtra("dialogue_id", -1)
 
-        FirebaseMessaging.getInstance().subscribeToTopic(viewModel.dialogueID.toString())
+        FirebaseMessaging.getInstance()
+            .subscribeToTopic("d${viewModel.dialogueID}")
 
         CoroutineScope(Main).launch {
             binding.companionNameTv.text = withContext(IO) {

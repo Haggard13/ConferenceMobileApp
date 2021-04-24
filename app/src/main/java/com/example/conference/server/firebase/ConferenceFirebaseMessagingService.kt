@@ -60,6 +60,11 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                         return@launch
                     notifyNewMessage(p0)
                 }
+            "conference" ->
+                CoroutineScope(Main).launch {
+                    sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
+                    notifyNewConference(p0)
+                }
         }
     }
 
@@ -106,7 +111,48 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
 
         nManager.notify(id, n)
     }
-    
+
+    private suspend fun notifyNewConference(p0: RemoteMessage) {
+        val type = p0.data["notification_type"]
+        val id = p0.data["id"]!!.toInt()
+
+        val nManager = NotificationManagerCompat
+            .from(this)
+
+        val intent =
+            Intent(this,
+                if (type == "conference")
+                    ConferenceActivity::class.java
+                else
+                    DialogueActivity::class.java
+            )
+        intent.putExtra(if (type == "conference") "conference_id" else "dialogue_id", id)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+
+        val n: Notification =
+            if (SDK_INT >= O) {
+                val channel: NotificationChannel =
+                    createChannel(type == "conference")
+
+                nManager.createNotificationChannel(channel)
+
+                NotificationCompat.Builder(
+                    this@ConferenceFirebaseMessagingService,
+                    channel.id
+                )
+            } else {
+                NotificationCompat.Builder(this@ConferenceFirebaseMessagingService)
+            }
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setContentTitle(p0.data["name"])
+                .setContentText(p0.data["message"])
+                .build()
+
+        nManager.notify(id, n)
+    }
+
     private fun NotificationCompat.Builder.setMessagingStyle(p0: RemoteMessage, avatar: Bitmap
     ): NotificationCompat.Builder {
         val sender =
@@ -146,6 +192,7 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                             (if (isConference) "/conference" else "/user") +
                             "/avatar/download/?id=$id"
                 )
+                .placeholder(R.drawable.placeholder)
                 .get()
         }
 }

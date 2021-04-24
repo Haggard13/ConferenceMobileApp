@@ -80,7 +80,8 @@ class ConferenceActivity : AppCompatActivity() {
 
         checkConferenceName()
 
-        FirebaseMessaging.getInstance().subscribeToTopic(viewModel.conferenceID.toString())
+        FirebaseMessaging.getInstance()
+            .subscribeToTopic("c${viewModel.conferenceID}") //todo отключение уведомлений
 
         CoroutineScope(Main).launch {
             conference_name_tv.text = withContext(IO) { viewModel.getConference().name }

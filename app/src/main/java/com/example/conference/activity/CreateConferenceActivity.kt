@@ -1,14 +1,18 @@
 package com.example.conference.activity
 
+import android.os.Build
 import android.os.Bundle
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.account.Account
 import com.example.conference.adapter.CreateConferenceRecyclerViewAdapter
 import com.example.conference.databinding.ActivityCreateConferenceBinding
+import com.example.conference.db.data.ConferenceMemberStatus
 import com.example.conference.db.entity.ConferenceEntity
 import com.example.conference.exception.CreateConferenceException
 import com.example.conference.json.ConferenceMember
@@ -30,6 +34,7 @@ class  CreateConferenceActivity : AppCompatActivity() {
     private val members = ArrayList<ConferenceMember>()
     private val conferenceProvider = ConferenceProvider()
 
+    @RequiresApi(Build.VERSION_CODES.N)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityCreateConferenceBinding.inflate(layoutInflater)
@@ -41,30 +46,41 @@ class  CreateConferenceActivity : AppCompatActivity() {
         members.add(
             ConferenceMember(
                 account.userID,
-                status = 1
+                ConferenceMemberStatus.ADMIN.ordinal
             )
         )
 
         viewModel.viewModelScope.launch {
-            binding.createConfereneRV.apply {
+            binding.contactsRv .apply {
                 layoutManager = LinearLayoutManager(this@CreateConferenceActivity)
                 adapter = CreateConferenceRecyclerViewAdapter(
-                    viewModel.getContacts(),
-                    { members.add(ConferenceMember(it.hashCode(), 0)) },
-                    { members.remove(ConferenceMember(it.hashCode(), 0)) }
+                    contacts = viewModel.getContacts(),
+                    callbackAddMember = {
+                        members.add(
+                            ConferenceMember(
+                                id = it.hashCode(),
+                                ConferenceMemberStatus.SIMPLE_USER.ordinal
+                            )
+                        )
+                    },
+                    callbackRemoveMember = { email ->
+                        members.removeIf {
+                            it.id == email.hashCode()
+                        }
+                    }
                 )
             }
         }
     }
 
-    fun onBackClick(v: View) =
-        finish()
+    fun onBackClick(v: View) = finish()
 
     fun onCreateConferenceClick(v: View) {
-        val name = binding.conferenceNameET.text.toString()
-        if (!conferencePropertiesIsCorrectly(name))
+        val name = binding.conferenceNameEt.text.toString()
+        if (!conferencePropertiesIsCorrectly(name)) {
             return
-        addConference(name)
+        }
+        createConference(name)
     }
 
     private fun conferencePropertiesIsCorrectly(name: String): Boolean =
@@ -80,8 +96,9 @@ class  CreateConferenceActivity : AppCompatActivity() {
             else -> true
         }
 
-    private fun addConference(name: String) {
+    private fun createConference(name: String) =
         CoroutineScope(Main).launch {
+            binding.confereceCreatingPb.isVisible = true
             try {
                 val conference = ConferenceEntity(
                     id = -1,
@@ -96,12 +113,15 @@ class  CreateConferenceActivity : AppCompatActivity() {
                 if (isCreated) {
                     showSnackBar("Конференция создана")
                     finish()
+                } else {
+                    showSnackBar("При создании произошла ошибка")
                 }
             } catch (e: CreateConferenceException) {
                 showSnackBar("Проверьте подключение к сети")
+            } finally {
+                binding.confereceCreatingPb.isVisible = false
             }
         }
-    }
 
     private fun showSnackBar(text: String) =
         Snackbar

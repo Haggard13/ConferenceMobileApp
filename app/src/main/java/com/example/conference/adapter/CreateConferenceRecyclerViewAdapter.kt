@@ -12,8 +12,8 @@ import com.squareup.picasso.Picasso
 
 class CreateConferenceRecyclerViewAdapter(
     var contacts: List<ContactEntity>,
-    private var callbackOn: (email: String) -> Unit,
-    private var callbackOff: (email: String) -> Unit
+    private var callbackAddMember: (email: String) -> Unit,
+    private var callbackRemoveMember: (email: String) -> Unit
 ) : RecyclerView.Adapter<CreateConferenceRecyclerViewAdapter.ContactViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ContactViewHolder {
@@ -41,11 +41,11 @@ class CreateConferenceRecyclerViewAdapter(
                 root.setOnClickListener {
                     when (contactChoseImg.isVisible) {
                         true -> {
-                            callbackOff.invoke(contact.email)
+                            callbackRemoveMember.invoke(contact.email)
                             contactChoseImg.isVisible = false
                         }
                         false -> {
-                            callbackOn.invoke(contact.email)
+                            callbackAddMember.invoke(contact.email)
                             contactChoseImg.isVisible = true
                         }
                     }
