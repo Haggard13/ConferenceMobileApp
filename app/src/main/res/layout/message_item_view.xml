@@ -54,8 +54,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
+                    android:autoLink="all|web"
+                    android:linksClickable="true"
                     android:text="TextView"
                     android:textColor="@color/colorText"
+                    android:textIsSelectable="true"
                     android:textSize="16sp"
                     tools:text="Привет всем! В этом лайоте хранится итем для ресайклервйю с собщением от человека. Сейчас я проверяю как это выглядит " />
 

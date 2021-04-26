@@ -20,23 +20,19 @@
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/conferences" />
+            android:layout_height="wrap_content" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/dialogues" />
+            android:layout_height="wrap_content" />
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/profile" />
+            android:layout_height="wrap_content" />
     </com.google.android.material.tabs.TabLayout>
 
-    <view
+    <androidx.viewpager.widget.ViewPager
         android:id="@+id/mainVP"
-        class="androidx.viewpager.widget.ViewPager"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toTopOf="@+id/mainTL"

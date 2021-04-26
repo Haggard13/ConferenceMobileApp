@@ -17,6 +17,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
+            android:id="@+id/textView26"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:background="#ffffff"
@@ -31,19 +32,31 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/createDiaBackIB"
+            android:id="@+id/back_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:elevation="2dp"
+            android:onClick="onBackClick"
             android:scaleType="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/outline_arrow_back_24" />
+
+        <ProgressBar
+            android:id="@+id/dialogue_creating_pb"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:elevation="2dp"
+            android:padding="10dp"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/createDialogueRV"
+        android:id="@+id/contacts_rv"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"

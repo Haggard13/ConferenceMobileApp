@@ -62,17 +62,17 @@ class ProfileFragment : Fragment() {
         val account = Account(activity!!.applicationContext)
 
         binding?.apply {
-            exitBtn.setOnClickListener(this@ProfileFragment::onExitClick)
+            exitIb.setOnClickListener(this@ProfileFragment::onExitClick)
 
-            emailTV.text = account.userEmail
-            nameTV.text = account.userName
-            surnameTV.text = account.userSurname
+            emailTV.text = account.email
+            nameTV.text = account.name
+            surnameTV.text = account.surname
 
             addContactIB.setOnClickListener(this@ProfileFragment::onAddContactClick)
 
             avatarIV.setOnLongClickListener(this@ProfileFragment::onChangeAvatarLongClick)
             Picasso.get()
-                .load(Server.baseURL + "/user/avatar/download/?id=" + account.userID)
+                .load(Server.baseURL + "/user/avatar/download/?id=" + account.id)
                 .placeholder(R.drawable.placeholder)
                 .error(R.drawable.placeholder)
                 .fit()
@@ -113,7 +113,7 @@ class ProfileFragment : Fragment() {
                     withContext(IO) {
                         val fileStream = activity!!.contentResolver.openInputStream(imageUri)
                         val allBytes = fileStream!!.readBytes()
-                        usersManager.changeUserAvatar(Addition(allBytes, "${Account(activity!!.applicationContext).userID}"))
+                        usersManager.changeUserAvatar(Addition(allBytes, "${Account(activity!!.applicationContext).id}"))
                     }
 
                     withContext(Main) {
@@ -121,7 +121,7 @@ class ProfileFragment : Fragment() {
                             .load(
                                 ConferenceAPIProvider.BASE_URL +
                                         "/user/avatar/download/?id=" +
-                                        Account(activity!!.applicationContext).userID
+                                        Account(activity!!.applicationContext).id
                             )
                             .placeholder(R.drawable.placeholder)
                             .error(R.drawable.placeholder)

@@ -29,7 +29,7 @@ class StartActivity : AppCompatActivity() {
 
             val account = Account(this@StartActivity.applicationContext)
             FirebaseMessaging.getInstance().run {
-                subscribeToTopic("u${account.userID}")
+                subscribeToTopic("u${account.id}")
             }
             /*FirebaseMessaging.getInstance().token.addOnCompleteListener {
                 if (it.isSuccessful) {

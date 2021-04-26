@@ -14,7 +14,8 @@ import com.example.conference.db.entity.*
         DialogueEntity::class,
         CMessageEntity::class,
         DMessageEntity::class,
-        MeetChatMessageEntity::class
+        MeetChatMessageEntity::class,
+        ConferenceNotificationEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -27,6 +28,7 @@ abstract class ConferenceRoomDatabase: RoomDatabase() {
     abstract fun cMessageDao(): CMessageDao
     abstract fun dMessageDao(): DMessageDao
     abstract fun meetChatMessageDao(): MeetChatMessagesDao
+    abstract fun conferenceNotificationDao(): ConferenceNotificationDao
 
     companion object{
         @Volatile

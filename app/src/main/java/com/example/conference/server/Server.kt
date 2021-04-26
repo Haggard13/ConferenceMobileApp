@@ -8,10 +8,12 @@ import com.example.conference.exception.SendMessageException
 import com.example.conference.json.CMessageList
 import com.example.conference.json.ConferenceMessageWithoutID
 import com.google.gson.Gson
-import okhttp3.*
+import okhttp3.ConnectionSpec
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
@@ -32,26 +34,6 @@ object Server {
         return client.newCall(request).execute()
     }
 
-    fun sendNewConferenceAvatar(conference_id: Int, file: ByteArray): Int {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file" , "$conference_id.png",
-                file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, file.size)
-            )
-            .build()
-
-        val request = Request.Builder()
-            .url("$baseURL/conference/avatar/upload")
-            .post(requestBody)
-            .build()
-        val client = OkHttpClient.Builder().build()
-        val response = client.newCall(request).execute()
-        return if (!response.isSuccessful) {
-            -1
-        } else
-            1
-    }
-
     fun sendMeetChatTextMessage(
         conferenceID: Int,
         messageText: String,
@@ -63,10 +45,10 @@ object Server {
         val message = ConferenceMessageWithoutID(
             messageText,
             Date().time,
-            accountData.userID,
+            accountData.id,
             conferenceID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
+            accountData.name?: "",
+            accountData.surname?: "",
             SenderEnum.USER.ordinal,
             MessageType.TEXT_MESSAGE.type
         )
@@ -120,7 +102,7 @@ object Server {
             val response: Response = get("/meet_chat/get_messages/?" +
                     "conference_id=$conferenceID" +
                     "&last_message_id=$lastMessagesID" +
-                    "&user_id=${Account(context).userID}")
+                    "&user_id=${Account(context).id}")
             return Gson().fromJson(
                 response.body?.string(),
                 CMessageList::class.java

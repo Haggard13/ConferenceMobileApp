@@ -127,6 +127,7 @@ class ConferencesFragment : Fragment() {
             withContext(IO) {
                 conferences.forEach {
                     viewModel.addConference(it)
+                    viewModel.addConferenceNotification(it.id)
                 }
             }
         } catch (e: ConferencesGettingException) {

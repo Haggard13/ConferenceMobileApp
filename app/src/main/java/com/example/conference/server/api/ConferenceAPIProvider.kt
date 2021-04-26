@@ -13,4 +13,8 @@ object ConferenceAPIProvider {
             .build()
 
     val conferenceAPI: ConferenceAPI = retrofit.create(ConferenceAPI::class.java)
+    val dialogueMessageAPI: DialogueMessageAPI = retrofit.create(DialogueMessageAPI::class.java)
+    val conferenceMessageAPI: ConferenceMessageAPI = retrofit.create(ConferenceMessageAPI::class.java)
+    val dialogueAPI: DialogueAPI = retrofit.create(DialogueAPI::class.java)
+    val userAPI: UserAPI = retrofit.create(UserAPI::class.java)
 }

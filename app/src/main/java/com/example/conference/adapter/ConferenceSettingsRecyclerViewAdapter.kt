@@ -1,14 +1,14 @@
 package com.example.conference.adapter
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import com.example.conference.R
+import com.example.conference.databinding.ContactItemViewBinding
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.server.Server
+import com.example.conference.server.api.ConferenceAPIProvider
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.contact_item_view.view.*
 
 class ConferenceSettingsRecyclerViewAdapter(
     var conferenceMembers: List<ContactEntityWithStatus>,
@@ -16,37 +16,41 @@ class ConferenceSettingsRecyclerViewAdapter(
     RecyclerView.Adapter<ConferenceSettingsRecyclerViewAdapter.MemberViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MemberViewHolder {
-        return MemberViewHolder(LayoutInflater
-            .from(parent.context)
-            .inflate(R.layout.contact_item_view, parent, false))
+        val inflater = LayoutInflater.from(parent.context)
+        val binding = ContactItemViewBinding.inflate(inflater, parent, false)
+        return MemberViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
-        holder.bind(position)
+        holder.bind(conferenceMembers[position])
     }
 
     override fun getItemCount() = conferenceMembers.size
 
-    inner class MemberViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        fun bind(p: Int) {
-            Picasso
-                .get()
-                .load("${Server.baseURL}/user/avatar/download/?id=${conferenceMembers[p].email.hashCode()}")
-                .centerCrop()
-                .fit()
-                .placeholder(R.drawable.placeholder)
-                .error(R.drawable.placeholder)
-                .into(itemView.contact_avatar_iv)
-            itemView.contact_name_tv.text = conferenceMembers[p].name
-            itemView.contact_surname_tv.text = conferenceMembers[p].surname
-            itemView.contact_email_tv.text = conferenceMembers[p].email
-            if (conferenceMembers[p].status == 0)
-                itemView.contactChoseImg.visibility = View.INVISIBLE
-            else
-                itemView.contactChoseImg.setImageResource(R.drawable.admin)
-            itemView.setOnLongClickListener {
-                callback(conferenceMembers[p])
-                true
+    inner class MemberViewHolder(private val binding: ContactItemViewBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(member: ContactEntityWithStatus) {
+            binding.apply {
+                Picasso
+                    .get()
+                    .load(ConferenceAPIProvider.BASE_URL +
+                            "/user/avatar/download/?id=" +
+                            member.email.hashCode())
+                    .centerCrop()
+                    .fit()
+                    .placeholder(R.drawable.placeholder)
+                    .error(R.drawable.placeholder)
+                    .into(contactAvatarIv)
+                contactNameTv.text = member.name
+                contactSurnameTv.text = member.surname
+                contactEmailTv.text = member.email
+                if (member.status == 0)
+                    contactChoseImg.isVisible = false
+                else
+                    contactChoseImg.setImageResource(R.drawable.outline_grade_24)
+                itemView.setOnLongClickListener {
+                    callback(member)
+                    true
+                }
             }
         }
     }

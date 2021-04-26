@@ -6,6 +6,7 @@ import com.example.conference.exception.UserFindingException
 import com.example.conference.exception.UserNotFoundException
 import com.example.conference.file.Addition
 import com.example.conference.server.api.ConferenceAPIProvider
+import com.example.conference.server.api.UserAPI
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -14,11 +15,11 @@ import java.net.SocketException
 import java.net.SocketTimeoutException
 
 class UsersManager {
-    private val conferenceAPI =  ConferenceAPIProvider.conferenceAPI
+    private val userAPI: UserAPI = ConferenceAPIProvider.userAPI
 
     fun findUser(email: String): ContactEntity {
         try {
-            val response = conferenceAPI.getUserInfo(email).execute()
+            val response = userAPI.getUserInfo(email).execute()
 
             if (!response.isSuccessful) {
                 throw UserNotFoundException()
@@ -41,7 +42,7 @@ class UsersManager {
                 "file" , "${photo.name}.png",
                     photo.file.toRequestBody("application/octet-stream".toMediaTypeOrNull(), 0, photo.file.size)
                 )
-            conferenceAPI
+            userAPI
                 .changeUserAvatar(photoRequestBody)
                 .execute()
         } catch (e: Exception) {

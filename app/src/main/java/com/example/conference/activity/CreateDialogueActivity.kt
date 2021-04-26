@@ -1,77 +1,93 @@
 package com.example.conference.activity
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.conference.R
 import com.example.conference.adapter.CreateDialogueRecyclerViewAdapter
-import com.example.conference.db.ConferenceRoomDatabase
+import com.example.conference.databinding.ActivityCreateDialogueBinding
+import com.example.conference.db.entity.DialogueEntity
 import com.example.conference.exception.CreateDialogueException
-import com.example.conference.json.Dialogue
-import com.example.conference.server.Server
+import com.example.conference.server.provider.DialogueProvider
 import com.example.conference.vm.CreateDialogueViewModel
-import com.google.gson.Gson
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_create_dialogue.*
-import kotlinx.coroutines.GlobalScope
+import kotlinx.android.synthetic.main.fragment_dialogues.view.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.URLEncoder
+import kotlinx.coroutines.withContext
+import java.util.*
 
 class CreateDialogueActivity : AppCompatActivity() {
-    lateinit var vm: CreateDialogueViewModel
+
+    private lateinit var viewModel: CreateDialogueViewModel
+    private val dialogueProvider = DialogueProvider()
+    private lateinit var binding: ActivityCreateDialogueBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_create_dialogue)
 
-        vm = ViewModelProvider(this).get(CreateDialogueViewModel::class.java)
+        binding = ActivityCreateDialogueBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        createDiaBackIB.setOnClickListener { finish() }
+        viewModel = ViewModelProvider(this).get(CreateDialogueViewModel::class.java)
 
-        vm.viewModelScope.launch {
-            createDialogueRV.layoutManager = LinearLayoutManager(this@CreateDialogueActivity)
-            createDialogueRV.adapter = CreateDialogueRecyclerViewAdapter(
-                contacts = ConferenceRoomDatabase.getDatabase(this@CreateDialogueActivity).contactDao().getAll()
-            ) { email: String, name: String, surname: String ->
-                addDialogue(email, name, surname)
+        viewModel.viewModelScope.launch {
+            binding.contactsRv.apply {
+                layoutManager = LinearLayoutManager(this@CreateDialogueActivity)
+                adapter =
+                    CreateDialogueRecyclerViewAdapter(
+                        contacts = viewModel.getAllContacts(),
+                        callback = this@CreateDialogueActivity::createDialogue
+                    )
             }
         }
     }
 
-    private fun addDialogue(email: String, name: String, surname: String) {
-        GlobalScope.launch {
-            val json = Gson()
-                .toJson(
-                    Dialogue(
-                        first_user_id = vm.getUserID(),
-                        second_user_id = email.hashCode(),
-                        first_user_email = vm.getUserEmail()!!,
-                        second_user_email = email,
-                        first_user_name = vm.getUserName()!!,
-                        second_user_name = name,
-                        first_user_surname = vm.getUserSurname()!!,
-                        second_user_surname = surname))
+    fun onBackClick(v: View) = finish()
+
+
+    private fun createDialogue(email: String, name: String, surname: String) {
+        CoroutineScope(Main).launch {
             try {
-                val r = Server.get(
-                    String.format(
-                        "/dialogue/createNewDialogue/?dialogue_info=%s",
-                        URLEncoder.encode(json, "UTF-8")
-                    )
-                )
-                if (!r.isSuccessful || r.body!!.string().toInt() == -1)
-                    throw CreateDialogueException()
-                vm.showToast(this@CreateDialogueActivity, "Диалог успешно создан")
-                finish()
-            } catch (e: ConnectException) {
-                vm.showToast(this@CreateDialogueActivity, "Ошибка соединения")
-            } catch (e: SocketTimeoutException) {
-                vm.showToast(this@CreateDialogueActivity, "Ошибка соединения")
+                binding.dialogueCreatingPb.isVisible = true
+                val isCreated =
+                    withContext(IO) {
+                        dialogueProvider.createNewDialogue(
+                            DialogueEntity(
+                                id = -1,
+                                second_user_id = email.hashCode(),
+                                second_user_email = email,
+                                second_user_name = name,
+                                second_user_surname = surname,
+                                last_message = "Диалог создан",
+                                last_message_time = Date().time
+                            ),
+                            viewModel.account
+                        )
+                    }
+                if (isCreated) {
+                    showSnackBar("Диалог создан")
+                    delay(500)
+                    finish()
+                } else {
+                    showSnackBar("Ошибка создания диалога")
+                }
             } catch (e: CreateDialogueException) {
-                vm.showToast(this@CreateDialogueActivity, "Что-то пошло не так. Возможно, диалог уже существует")
+                showSnackBar("Проверьте подключение к сети")
+            } finally {
+                binding.dialogueCreatingPb.isVisible = false
             }
         }
+    }
+
+    private fun showSnackBar(text: String) {
+        Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
     }
 }

@@ -3,15 +3,16 @@ package com.example.conference.server.provider
 import android.content.Context
 import com.example.conference.account.Account
 import com.example.conference.db.entity.CMessageEntity
-import com.example.conference.server.api.ConferenceAPI
 import com.example.conference.server.api.ConferenceAPIProvider
+import com.example.conference.server.api.ConferenceMessageAPI
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 
 class ConferenceMessageProvider {
 
-    private val conferenceAPI: ConferenceAPI = ConferenceAPIProvider.conferenceAPI
+    private val conferenceMessageAPI: ConferenceMessageAPI =
+        ConferenceAPIProvider.conferenceMessageAPI
 
     fun getNewMessages(
         messengerID: Int,
@@ -20,8 +21,8 @@ class ConferenceMessageProvider {
     ): List<CMessageEntity>? {
         val account = Account(context)
         try {
-            return conferenceAPI
-                .getNewConferenceMessages(messengerID, lastMessageID, account.userID)
+            return conferenceMessageAPI
+                .getNewConferenceMessages(messengerID, lastMessageID, account.id)
                 .execute()
                 .body()
         } catch (e: Exception) {
@@ -36,7 +37,7 @@ class ConferenceMessageProvider {
 
     fun checkNewConferenceMessages(conferenceID: Int, lastMessageID: Int): Boolean {
         try {
-            return conferenceAPI
+            return conferenceMessageAPI
                 .checkNewConferenceMessages(conferenceID, lastMessageID)
                 .execute()
                 .body()?: false

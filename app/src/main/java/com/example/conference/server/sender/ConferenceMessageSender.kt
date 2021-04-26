@@ -8,6 +8,7 @@ import com.example.conference.db.entity.CMessageEntity
 import com.example.conference.exception.SendMessageException
 import com.example.conference.file.Addition
 import com.example.conference.server.api.ConferenceAPIProvider
+import com.example.conference.server.api.ConferenceMessageAPI
 import com.google.gson.Gson
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -19,7 +20,8 @@ import java.net.SocketTimeoutException
 import java.util.*
 
 class ConferenceMessageSender: MessageSender() {
-    private val conferenceAPI = ConferenceAPIProvider.conferenceAPI
+    private val conferenceMessageAPI: ConferenceMessageAPI =
+        ConferenceAPIProvider.conferenceMessageAPI
 
     override suspend fun sendTextMessage(context: Context, messageText: String, messengerID: Int) {
         val account = Account(context)
@@ -28,16 +30,16 @@ class ConferenceMessageSender: MessageSender() {
             id = -1,
             messageText,
             date_time = Date().time,
-            account.userID,
+            account.id,
             messengerID,
-            sender_name = account.userName?: "",
-            sender_surname = account.userSurname?: "",
+            sender_name = account.name?: "",
+            sender_surname = account.surname?: "",
             SenderEnum.USER.ordinal,
             MessageType.TEXT_MESSAGE.type
         )
 
         try {
-            val messageID: Int = conferenceAPI
+            val messageID: Int = conferenceMessageAPI
                 .sendTextMessageInConference(message)
                 .execute()
                 .body()?: -1
@@ -62,10 +64,10 @@ class ConferenceMessageSender: MessageSender() {
             id = -1,
             messageText,
             date_time = Date().time,
-            sender_id = accountData.userID,
+            sender_id = accountData.id,
             messengerID,
-            sender_name = accountData.userName?: "",
-            sender_surname = accountData.userSurname?: "",
+            sender_name = accountData.name?: "",
+            sender_surname = accountData.surname?: "",
             SenderEnum.USER.ordinal,
             MessageType.MESSAGE_WITH_PHOTO.type
         )
@@ -80,7 +82,7 @@ class ConferenceMessageSender: MessageSender() {
             .toJson(message)
             .toRequestBody("application/json".toMediaTypeOrNull())
         try {
-            val messageID: Int = conferenceAPI
+            val messageID: Int = conferenceMessageAPI
                 .sendMessageWithPhotoInConference(photoMultipart, messageRequestBody)
                 .execute()
                 .body()?: -1
@@ -101,10 +103,10 @@ class ConferenceMessageSender: MessageSender() {
             id = -1,
             "Аудиосообщение",
             Date().time,
-            accountData.userID,
+            accountData.id,
             messengerID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
+            accountData.name?: "",
+            accountData.surname?: "",
             SenderEnum.USER.ordinal,
             MessageType.AUDIO_MESSAGE.type
         )
@@ -121,7 +123,7 @@ class ConferenceMessageSender: MessageSender() {
 
         try {
             val messageID: Int =
-                conferenceAPI
+                conferenceMessageAPI
                     .sendAudioMessageInConference(audioMultipart, messageRequestBody)
                     .execute()
                     .body()?: -1
@@ -142,10 +144,10 @@ class ConferenceMessageSender: MessageSender() {
             id = -1,
             addition.name,
             Date().time,
-            accountData.userID,
+            accountData.id,
             messengerID,
-            accountData.userName?: "",
-            accountData.userSurname?: "",
+            accountData.name?: "",
+            accountData.surname?: "",
             SenderEnum.USER.ordinal,
             MessageType.MESSAGE_WITH_FILE.type
         )
@@ -161,7 +163,7 @@ class ConferenceMessageSender: MessageSender() {
             .toRequestBody("application/json".toMediaTypeOrNull())
         try {
             val messageID: Int =
-                conferenceAPI
+                conferenceMessageAPI
                     .sendMessageWithFileInConference(fileMultipart, messageRequestBody)
                     .execute()
                     .body()?: -1

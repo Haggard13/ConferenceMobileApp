@@ -23,6 +23,7 @@ import kotlinx.android.synthetic.main.activity_create_conference.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -45,7 +46,7 @@ class  CreateConferenceActivity : AppCompatActivity() {
         val account = Account(this)
         members.add(
             ConferenceMember(
-                account.userID,
+                account.id,
                 ConferenceMemberStatus.ADMIN.ordinal
             )
         )
@@ -102,7 +103,7 @@ class  CreateConferenceActivity : AppCompatActivity() {
             try {
                 val conference = ConferenceEntity(
                     id = -1,
-                    name,
+                    name = name,
                     count = members.size,
                     last_message = "Конференция создана",
                     last_message_time = Date().time
@@ -112,6 +113,7 @@ class  CreateConferenceActivity : AppCompatActivity() {
                 }
                 if (isCreated) {
                     showSnackBar("Конференция создана")
+                    delay(500)
                     finish()
                 } else {
                     showSnackBar("При создании произошла ошибка")

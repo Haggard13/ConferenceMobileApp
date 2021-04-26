@@ -2,195 +2,225 @@ package com.example.conference.activity
 
 import android.app.AlertDialog
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.view.View
 import android.widget.EditText
+import android.widget.Switch
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.conference.R
+import com.example.conference.account.Account
 import com.example.conference.adapter.ConferenceSettingsRecyclerViewAdapter
+import com.example.conference.databinding.ActivityConferenceSettingsBinding
 import com.example.conference.exception.*
-import com.example.conference.json.ConferenceMembersList
+import com.example.conference.file.Addition
 import com.example.conference.json.ContactEntityWithStatus
-import com.example.conference.server.Server
+import com.example.conference.server.api.ConferenceAPIProvider
+import com.example.conference.server.provider.ConferenceProvider
 import com.example.conference.vm.ConferenceSettingsViewModel
-import com.google.gson.Gson
+import com.google.android.material.snackbar.Snackbar
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_conference_settings.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.URLEncoder
+import java.io.InputStream
 
 class ConferenceSettingsActivity : AppCompatActivity() {
-    lateinit var vm: ConferenceSettingsViewModel
+
+    companion object {
+        const val CHANGE_AVATAR = 0
+        const val ADD_USER = 1
+    }
+
+    private lateinit var viewModel: ConferenceSettingsViewModel
+    private lateinit var binding: ActivityConferenceSettingsBinding
+    private val conferenceProvider = ConferenceProvider()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_conference_settings)
+        binding = ActivityConferenceSettingsBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        vm = ViewModelProvider(this).get(ConferenceSettingsViewModel::class.java)
-        vm.conferenceID = intent.getIntExtra("conference_id", -1)
-        vm.viewModelScope.launch {
-            vm.conference = vm.getConference()
-            conferenceNameSettingsTV.text = vm.conference.name
-            conferenceCountSettingsTV.text = vm.conference.count.toString()
-            // conferenceNotificationSwitch.isChecked = vm.conference.notification == 1 fixme
-        }
+        viewModel = ViewModelProvider(this).get(ConferenceSettingsViewModel::class.java)
+        viewModel.conferenceID = intent.getIntExtra("conference_id", -1)
 
-        conferenceNotificationSwitch.setOnClickListener(this::onNotificationSwitchClick)
-        editConferenceNameIB.setOnClickListener(this::onEditNameClick)
-        conferenceSettingsBackIB.setOnClickListener { finish() }
-        conferenceSettingsAvatarIV.setOnLongClickListener(this::onConferenceAvatarLongClick)
-        addConferenceMemberIB.setOnClickListener(this::onAddUserClick)
-        GlobalScope.launch {
-            try {
-                val r = Server.get("/conference/${vm.conferenceID}/members")
-                if (!r.isSuccessful)
-                    throw LoadConferenceMembersException()
-                val json = r.body!!.string()
-                val conferenceMembers =
-                    Gson().fromJson(json,  ConferenceMembersList::class.java)
-                withContext(Main) {
-                    conferenceSettingsMembersRV.layoutManager = LinearLayoutManager(this@ConferenceSettingsActivity)
-                    vm.adapter = ConferenceSettingsRecyclerViewAdapter(conferenceMembers.list,
-                        this@ConferenceSettingsActivity::deleteMemberDialog)
-                    conferenceSettingsMembersRV.adapter = vm.adapter
-                }
-            } catch (e: SocketTimeoutException) {
-            } catch (e: ConnectException) {
-            } catch (e: LoadConferenceMembersException) {
+        viewModel.viewModelScope.launch {
+            viewModel.initConference()
+            binding.apply {
+                nameTv.text = viewModel.conference.name
+                countTv.text = viewModel.conference.count.toString()
+                notificationSwitch.isChecked = viewModel.getNotification() == 1
             }
         }
 
-        Picasso.get()
-            .load("${Server.baseURL}/conference/avatar/download/?id=${vm.conferenceID}")
-            .placeholder(R.drawable.placeholder)
-            .error(R.drawable.placeholder)
-            .fit()
-            .centerCrop()
-            .into(conferenceSettingsAvatarIV)
+        binding.avatarImage.setOnLongClickListener(this::onAvatarLongClick)
 
+        CoroutineScope(Main).launch {
+            try {
+                val conferenceMembers: List<ContactEntityWithStatus> =
+                    withContext(IO) {
+                        conferenceProvider.getConferenceMembers(viewModel.conferenceID)
+                    }
+                if (conferenceMembers.isEmpty()) {
+                    showSnackBar("Что-то пошло не так")
+                    return@launch
+                }
+                binding.membersRv.apply {
+                    layoutManager =
+                        LinearLayoutManager(this@ConferenceSettingsActivity)
+                    adapter =
+                        ConferenceSettingsRecyclerViewAdapter(
+                            conferenceMembers,
+                            this@ConferenceSettingsActivity::showMemberDeletingDialog
+                        )
+                }
+            } catch (e: LoadConferenceMembersException) {
+                showSnackBar("Проверьте подключение к сети")
+            }
+        }
+
+        loadAvatar()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == CHANGE_AVATAR && resultCode == RESULT_OK) {
-            GlobalScope.launch {
-                try {
-                    val imageUri = data?.data ?: throw LoadImageException()
-                    val fileStream = contentResolver.openInputStream(imageUri)
-                    val allBytes = fileStream!!.readBytes()
-                    val result = Server.sendNewConferenceAvatar(vm.conferenceID, allBytes)
-
-                    if (result == -1)
-                        throw LoadImageException()
-                    withContext(Main) {
-                        Picasso.get()
-                            .load(
-                                Server.baseURL
-                                        + "/conference/avatar/download/?id="
-                                        + vm.conferenceID
-                            )
-                            .placeholder(R.drawable.placeholder)
-                            .error(R.drawable.placeholder)
-                            .fit()
-                            .centerCrop()
-                            .into(conferenceSettingsAvatarIV)
+        if (resultCode == RESULT_OK) {
+            when (requestCode) {
+                CHANGE_AVATAR -> CoroutineScope(Main).launch {
+                    try {
+                        val imageUri: Uri = data?.data ?: throw LoadImageException()
+                        val fileStream: InputStream? =
+                            withContext(IO) {
+                                contentResolver.openInputStream(imageUri)
+                            }
+                        val allBytes: ByteArray = withContext(IO) { fileStream!!.readBytes() }
+                        val image = Addition(allBytes, "${viewModel.conferenceID}")
+                        val isChanged: Boolean = withContext(IO) {
+                            conferenceProvider.changeConferenceAvatar(image)
+                        }
+                        if (isChanged) {
+                            showSnackBar("Фото изменено")
+                            loadAvatar()
+                        } else {
+                            showSnackBar("Что-то пошло не так")
+                        }
+                    } catch (e: LoadImageException) {
+                        showSnackBar("Не удалось отправить изображение")
                     }
-                    vm.showToast("Успешно")
-                } catch (e: LoadImageException) {
-                    vm.showToast("Не удалось загрузить изображение")
-                } catch (e: ConnectException) {
-                    vm.showToast("Не удалось загрузить изображение")
-                } catch (e: SocketTimeoutException) {
-                    vm.showToast("Не удалось загрузить изображение")
-                } catch (e: IOException) {
-                    vm.showToast("Не удалось загрузить изображение")
                 }
-            }
-        } else if (requestCode == ADD_USER && resultCode == RESULT_OK) {
-            GlobalScope.launch {
-                try {
-                    val r = Server.get("/conference" +
-                            "/${vm.conferenceID}" +
-                            "/addUser" +
-                            "/${data!!.getIntExtra("user_id", 0)}" +
-                            "/as" +
-                            "/${getSharedPreferences("user_info", MODE_PRIVATE)
-                                .getInt("user_id", 0)}")
-                    if (!r.isSuccessful || r.body!!.string().toInt() == 0)
-                        throw AddConferenceMemberException()
-                    vm.showToast("Успешно")
-
-                    vm.updateRV()
-                } catch (e: ConnectException) {
-                    vm.showToast("Проверьте подключение к сети")
-                } catch (e: SocketTimeoutException) {
-                    vm.showToast("Проверьте подключение к сети")
-                } catch (e: AddConferenceMemberException) {
-                    vm.showToast("Что-то пошло не так. Возможно, у вас недостаточно прав")
+                ADD_USER -> CoroutineScope(Main).launch {
+                    try {
+                        val isAdded: Boolean =
+                            withContext(IO) {
+                                conferenceProvider
+                                    .addUserInConference(
+                                        viewModel.conferenceID,
+                                        data!!.getIntExtra("user_id", -1),
+                                        Account(applicationContext).id
+                                    )
+                            }
+                        if (isAdded) {
+                            showSnackBar("Пользователь добавлен в конференцию")
+                            updateConferenceMembers()
+                        } else
+                            showSnackBar("Что-то пошло не так. Возможно, у вас нет прав")
+                    } catch (e: AddConferenceMemberException) {
+                        showSnackBar("Проверьте подключение к сети")
+                    }
                 }
             }
         }
     }
 
-    private fun onNotificationSwitchClick(v: View) {
-        vm.viewModelScope.launch {
-            /*(v as Switch).isEnabled = false
-            if (vm.conference.notification == 1) {
+    fun onNotificationSwitchClick(v: View) {
+        viewModel.viewModelScope.launch {
+            (v as Switch).isEnabled = false
+            if (viewModel.getNotification() == 1) {
                 v.isChecked = false
-                vm.setNotification(0)
+                viewModel.changeNotification(0)
             } else {
                 v.isChecked = true
-                vm.setNotification(1)
+                viewModel.changeNotification(1)
             }
-            v.isEnabled = true*/ // FIXME: 15.04.21  
+            v.isEnabled = true
         }
     }
 
-    private fun onEditNameClick(v: View) {
-        changeNameDialog()
+    fun onEditNameClick(v: View) {
+        showNameChangingDialog()
     }
 
-    private fun onConferenceAvatarLongClick(v: View): Boolean {
-        changeAvatarDialog()
+    fun onBackClick(v: View) = finish()
+
+    fun onAddUserClick(v: View) =
+        startActivityForResult(
+            Intent(
+                this,
+                ChooseUserActivity::class.java
+            ),
+            ADD_USER
+        )
+
+    private fun onAvatarLongClick(v: View): Boolean {
+        showAvatarChangingDialog()
         return true
     }
 
-    private fun changeNameDialog() {
+    private fun updateConferenceMembers() {
+        CoroutineScope(Main).launch {
+            try {
+                val conferenceMembers: List<ContactEntityWithStatus> =
+                    withContext(IO) {
+                        conferenceProvider.getConferenceMembers(viewModel.conferenceID)
+                    }
+                if (conferenceMembers.isEmpty()) {
+                    showSnackBar("Что-то пошло не так")
+                    return@launch
+                }
+                (binding.membersRv.adapter as ConferenceSettingsRecyclerViewAdapter).apply {
+                    this.conferenceMembers = conferenceMembers
+                    notifyDataSetChanged()
+                }
+
+            } catch (e: LoadConferenceMembersException) {
+                showSnackBar("Проверьте подключение к сети")
+            }
+        }
+    }
+
+    private fun showNameChangingDialog() {
         val conferenceName = EditText(this)
-        conferenceName.text = Editable.Factory.getInstance().newEditable(vm.conference.name)
+        conferenceName.text = Editable.Factory.getInstance().newEditable(viewModel.conference.name)
         AlertDialog.Builder(this).setTitle("Название конференции")
             .setView(conferenceName)
             .setPositiveButton("ОК") { _, _ ->
-                GlobalScope.launch {
+                CoroutineScope(Main).launch {
                     try {
-                        var newName: String
-                        withContext(Main) {
-                            newName = conferenceName.text.toString()
+                        val newName: String = conferenceName.text.toString()
+                        val isChanged: Boolean = withContext(IO) {
+                            conferenceProvider.renameConference(viewModel.conferenceID, newName)
                         }
-                        val response = Server.get(
-                            "/conference/rename/?id=${vm.conferenceID}&" +
-                                    "new_name=${URLEncoder.encode(newName, "UTF-8")}")
-                        if (!response.isSuccessful)
-                            throw ConferenceRenameException()
-                        vm.renameConference(newName)
-                        withContext(Main) {
-                            conferenceNameSettingsTV.text = newName
+                        if (isChanged) {
+                            withContext(IO) { viewModel.renameConference(newName) }
+                            binding.nameTv.text = newName
+                            this@ConferenceSettingsActivity.sendBroadcast(
+                                Intent("NEW_CONFERENCE_NAME")
+                            )
+                        } else {
+                            showSnackBar("Что-то пошло не так")
                         }
-                        this@ConferenceSettingsActivity.sendBroadcast(Intent("NEW_CONFERENCE_NAME"))
                     }
-                    catch (e: SocketTimeoutException) { vm.showToast("Произошла ошибка") }
-                    catch (e: ConnectException) { vm.showToast("Произошла ошибка") }
-                    catch (e: ConferenceRenameException) { vm.showToast("Произошла ошибка") }
+                    catch (e: ConferenceRenameException) {
+                        showSnackBar("Проверьте подключение к сети")
+                    }
                 }
             }
             .setNegativeButton("Отмена") { dialog, _ ->
@@ -199,7 +229,7 @@ class ConferenceSettingsActivity : AppCompatActivity() {
             .create().show()
     }
 
-    private fun changeAvatarDialog() {
+    private fun showAvatarChangingDialog() {
         AlertDialog.Builder(this).setTitle("Изменить фотографию?")
             .setPositiveButton("Да") { _, _ ->
                 val pickIntent = Intent(Intent.ACTION_PICK)
@@ -209,49 +239,55 @@ class ConferenceSettingsActivity : AppCompatActivity() {
             .setNegativeButton("Нет") { dialog, _ ->
                 dialog.cancel()
             }
-            .create().show()
+            .create()
+            .show()
     }
 
-    private fun deleteMemberDialog(m: ContactEntityWithStatus) {
+    private fun showMemberDeletingDialog(member: ContactEntityWithStatus) {
         AlertDialog.Builder(this).setTitle("Удалить пользователя из конференции?")
             .setPositiveButton("Да") { _, _ ->
-                GlobalScope.launch {
+                CoroutineScope(Main).launch {
                     try {
-                        val r = Server.get("/conference" +
-                                "/${vm.conferenceID}" +
-                                "/deleteUser" +
-                                "/${m.email.hashCode()}" +
-                                "/as" +
-                                "/${getSharedPreferences("user_info", MODE_PRIVATE).getInt("user_id", 0)}")
-                        if (!r.isSuccessful)
-                            throw DeleteUserException()
-                        else if (r.body!!.string().toInt() != 1)
-                            throw DeleteUserException()
-                        else {
-                            vm.showToast("Пользователь удален")
-                            vm.updateRV()
+                        val isDeleting: Boolean =
+                            withContext(IO) {
+                                conferenceProvider
+                                    .deleteUserFromConference(
+                                        viewModel.conferenceID,
+                                        member.email.hashCode(),
+                                        Account(applicationContext).id
+                                    )
+                            }
+                        if (isDeleting) {
+                            showSnackBar("Пользователь удален из конференции")
+                            updateConferenceMembers()
                         }
-                    } catch (e: ConnectException) {
-                        vm.showToast("Проверьте подключение к сети")
-                    } catch (e: SocketTimeoutException) {
-                        vm.showToast("Проверьте подключение к сети")
+                        else
+                            showSnackBar("Что-то пошло не так. Возможно, у вас нет прав")
                     } catch (e: DeleteUserException) {
-                        vm.showToast("Что-то пошло не так")
+                        showSnackBar("Проверьте подключение к сети")
                     }
                 }
             }
             .setNegativeButton("Нет") { dialog, _ ->
                 dialog.cancel()
             }
-            .create().show()
+            .create()
+            .show()
     }
 
-    private fun onAddUserClick(v: View) {
-        startActivityForResult(Intent(this, ChooseUserActivity::class.java), ADD_USER)
+    private fun loadAvatar() {
+        Picasso.get()
+            .load(ConferenceAPIProvider.BASE_URL +
+                    "/conference/avatar/download/?id=" +
+                    viewModel.conferenceID
+            )
+            .placeholder(R.drawable.placeholder)
+            .error(R.drawable.placeholder)
+            .fit()
+            .centerCrop()
+            .into(binding.avatarImage)
     }
 
-    companion object {
-        const val CHANGE_AVATAR = 0
-        const val ADD_USER = 1
-    }
+    private fun showSnackBar(text: String) =
+        Snackbar.make(binding.root, text, Snackbar.LENGTH_SHORT).show()
 }

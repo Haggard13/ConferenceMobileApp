@@ -24,7 +24,7 @@
             android:layout_height="wrap_content">
 
             <ImageView
-                android:id="@+id/conferenceSettingsAvatarIV"
+                android:id="@+id/avatar_image"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
                 app:layout_constraintStart_toStartOf="parent"
@@ -38,7 +38,7 @@
                 android:orientation="horizontal"
                 app:layout_constraintBottom_toTopOf="@id/linearLayout2"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/conferenceSettingsAvatarIV"
+                app:layout_constraintStart_toEndOf="@id/avatar_image"
                 app:layout_constraintTop_toTopOf="parent">
 
                 <TextView
@@ -53,7 +53,7 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <TextView
-                    android:id="@+id/conferenceNameSettingsTV"
+                    android:id="@+id/name_tv"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:ellipsize="marquee"
@@ -61,17 +61,18 @@
                     android:text="TextView"
                     android:textColor="@color/colorText"
                     android:textSize="18sp"
-                    app:layout_constraintEnd_toStartOf="@+id/editConferenceNameIB"
+                    app:layout_constraintEnd_toStartOf="@+id/edit_name_ib"
                     app:layout_constraintStart_toEndOf="@+id/textView6"
                     app:layout_constraintTop_toTopOf="parent"
                     tools:text="Conference" />
 
                 <ImageButton
-                    android:id="@+id/editConferenceNameIB"
+                    android:id="@+id/edit_name_ib"
                     android:layout_width="18sp"
                     android:layout_height="18sp"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/button_bottom_navigation_view_background"
+                    android:onClick="onEditNameClick"
                     android:scaleType="fitEnd"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -84,7 +85,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintStart_toEndOf="@+id/conferenceSettingsAvatarIV"
+                app:layout_constraintStart_toEndOf="@+id/avatar_image"
                 app:layout_constraintTop_toBottomOf="@id/nameConstraintLayout">
 
                 <TextView
@@ -97,7 +98,7 @@
                     android:textSize="16sp" />
 
                 <TextView
-                    android:id="@+id/conferenceCountSettingsTV"
+                    android:id="@+id/count_tv"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="TextView"
@@ -107,16 +108,17 @@
             </LinearLayout>
 
             <Switch
-                android:id="@+id/conferenceNotificationSwitch"
+                android:id="@+id/notification_switch"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:checked="true"
+                android:onClick="onNotificationSwitchClick"
                 android:paddingLeft="5dp"
                 android:paddingRight="5dp"
                 android:text="Уведомления"
                 android:textSize="18sp"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/conferenceSettingsAvatarIV"
+                app:layout_constraintStart_toEndOf="@+id/avatar_image"
                 app:layout_constraintTop_toBottomOf="@+id/linearLayout2" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -152,6 +154,7 @@
             android:layout_height="40dp"
             android:background="@drawable/button_bottom_navigation_view_background"
             android:elevation="2dp"
+            android:onClick="onBackClick"
             android:scaleType="center"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -182,18 +185,19 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/addConferenceMemberIB"
+            android:id="@+id/add_member_ib"
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="#00FFFFFF"
-            android:scaleType="fitXY"
+            android:onClick="onAddUserClick"
+            android:scaleType="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/outline_add_24" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/conferenceSettingsMembersRV"
+        android:id="@+id/members_rv"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"

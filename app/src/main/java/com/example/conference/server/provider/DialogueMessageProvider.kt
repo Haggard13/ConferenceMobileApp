@@ -3,15 +3,15 @@ package com.example.conference.server.provider
 import android.content.Context
 import com.example.conference.account.Account
 import com.example.conference.db.entity.DMessageEntity
-import com.example.conference.server.api.ConferenceAPI
 import com.example.conference.server.api.ConferenceAPIProvider
+import com.example.conference.server.api.DialogueMessageAPI
 import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 
 class DialogueMessageProvider {
 
-    private val conferenceAPI: ConferenceAPI = ConferenceAPIProvider.conferenceAPI
+    private val dialogueMessageAPI: DialogueMessageAPI = ConferenceAPIProvider.dialogueMessageAPI
 
     fun getNewMessages(
         messengerID: Int,
@@ -20,8 +20,8 @@ class DialogueMessageProvider {
     ): List<DMessageEntity>? {
         val account = Account(context)
         try {
-            return conferenceAPI
-                .getNewDialogueMessages(messengerID, lastMessageID, account.userID)
+            return dialogueMessageAPI
+                .getNewDialogueMessages(messengerID, lastMessageID, account.id)
                 .execute()
                 .body()
         } catch (e: Exception) {
@@ -36,7 +36,7 @@ class DialogueMessageProvider {
 
     fun checkNewDialogueMessages(dialogueID: Int, lastMessageID: Int): Boolean {
         try {
-            return conferenceAPI
+            return dialogueMessageAPI
                 .checkNewDialogueMessages(dialogueID, lastMessageID)
                 .execute()
                 .body()?: false

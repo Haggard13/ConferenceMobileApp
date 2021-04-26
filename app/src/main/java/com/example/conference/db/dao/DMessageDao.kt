@@ -4,9 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.example.conference.db.entity.CMessageMinimal
 import com.example.conference.db.entity.DMessageEntity
-import com.example.conference.db.entity.DMessageMinimal
 
 @Dao
 interface DMessageDao {
@@ -21,7 +19,4 @@ interface DMessageDao {
 
     @Query("SELECT COUNT(*) FROM dialogue_messages_table WHERE dialogue_id = :dialogue_id")
     suspend fun getMessagesCount(dialogue_id: Int): Int
-
-    @Query("SELECT text, date_time FROM dialogue_messages_table WHERE id = (SELECT MAX(id) FROM dialogue_messages_table WHERE dialogue_id = :dialogue_id)")
-    suspend fun getLastMessage(dialogue_id: Int): DMessageMinimal
 }

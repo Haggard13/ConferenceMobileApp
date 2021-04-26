@@ -18,6 +18,9 @@ import com.example.conference.account.Account
 import com.example.conference.activity.ConferenceActivity
 import com.example.conference.activity.DialogueActivity
 import com.example.conference.application.ConferenceApplication
+import com.example.conference.db.ConferenceRoomDatabase
+import com.example.conference.db.entity.ConferenceEntity
+import com.example.conference.db.entity.DialogueEntity
 import com.example.conference.server.Server
 import com.example.conference.server.api.ConferenceAPIProvider
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -28,15 +31,16 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 
 class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(p0: String) {
         CoroutineScope(IO).launch {
             try {
-                ConferenceAPIProvider.conferenceAPI
+                ConferenceAPIProvider.userAPI
                     .sendFirebaseMessagingToken(
                         tokenWithID =
-                        "${Account(this@ConferenceFirebaseMessagingService).userID} $p0"
+                        "${Account(this@ConferenceFirebaseMessagingService).id} $p0"
                     ).execute()
             } catch (e: Exception) {
             }
@@ -48,8 +52,15 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
         when (p0.data["notification_type"]) {
             "cmessage" ->
                 CoroutineScope(Main).launch {
+                    val conferenceID = p0.data["id"]!!.toInt()
+                    val notification =
+                        ConferenceRoomDatabase
+                            .getDatabase(this@ConferenceFirebaseMessagingService)
+                            .conferenceNotificationDao()
+                            .getNotification(conferenceID)[0]
                     sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
-                    if ((application as ConferenceApplication).conferenceID == p0.data["id"]!!.toInt())
+                    if ((application as ConferenceApplication).conferenceID == conferenceID ||
+                            notification == 0)
                         return@launch
                     notifyNewMessage(p0)
                 }
@@ -65,6 +76,11 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                     sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
                     notifyNewConference(p0)
                 }
+            "dialogue" ->
+                CoroutineScope(Main).launch {
+                    sendBroadcast(Intent("NEW_CONFERENCE_MESSAGE"))
+                    notifyNewDialogue(p0)
+                }
         }
     }
 
@@ -72,7 +88,7 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
         val notificationType = p0.data["notification_type"]
         val id = p0.data["id"]!!.toInt()
 
-        if (p0.data["senderID"]!!.toInt() == Account(this).userID) {
+        if (p0.data["senderID"]!!.toInt() == Account(this).id) {
             return
         }
 
@@ -149,11 +165,38 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                 .setContentTitle(p0.data["name"])
                 .setContentText(p0.data["message"])
                 .build()
+        saveConferenceInDateBase(p0)
 
         nManager.notify(id, n)
     }
 
-    private fun NotificationCompat.Builder.setMessagingStyle(p0: RemoteMessage, avatar: Bitmap
+    private suspend fun saveConferenceInDateBase(p0: RemoteMessage) {
+        val conference = ConferenceEntity(
+            id = p0.data["id"]!!.toInt(),
+            name = p0.data["name"]!!,
+            count = p0.data["count"]!!.toInt(),
+            last_message = p0.data["message"]!!,
+            last_message_time = Date().time
+        )
+        ConferenceRoomDatabase.getDatabase(this).conferenceDao().insert(conference)
+    }
+
+    private suspend fun saveDialogueInDateBase(p0: RemoteMessage) {
+        val dialogue = DialogueEntity(
+            id = p0.data["dialogue_id"]!!.toInt(),
+            second_user_id = p0.data["id"]!!.toInt(),
+            p0.data["email"]!!,
+            p0.data["name"]!!,
+            p0.data["surname"]!!,
+            p0.data["message"]!!,
+            Date().time
+        )
+        ConferenceRoomDatabase.getDatabase(this).dialogueDao().insert(dialogue)
+    }
+
+    private fun NotificationCompat.Builder.setMessagingStyle(
+        p0: RemoteMessage,
+        avatar: Bitmap
     ): NotificationCompat.Builder {
         val sender =
             Person.Builder()
@@ -162,10 +205,42 @@ class ConferenceFirebaseMessagingService : FirebaseMessagingService() {
                 .build()
         val style =
             NotificationCompat.MessagingStyle(sender)
-                .addMessage(p0.notification!!.body, p0.data["time"]!!.toLong(), sender)
+                .addMessage(p0.notification!!.body, Date().time, sender)
         
         return this.setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(style)
+    }
+
+    private suspend fun notifyNewDialogue(p0: RemoteMessage) {
+        val id = p0.data["id"]!!.toInt()
+        val dialogueID = p0.data["dialogue_id"]!!.toInt()
+
+        val nManager = NotificationManagerCompat.from(this)
+
+        val avatar = getAvatar(false, id)
+        val intent = Intent(this, DialogueActivity::class.java)
+        intent.putExtra("dialogue_id", dialogueID)
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, 0)
+
+        val n: Notification =
+            if (SDK_INT >= O) {
+                val channel: NotificationChannel = createChannel(false)
+                nManager.createNotificationChannel(channel)
+                NotificationCompat.Builder(
+                    this@ConferenceFirebaseMessagingService,
+                    channel.id
+                )
+            } else {
+                NotificationCompat.Builder(this@ConferenceFirebaseMessagingService)
+            }
+                .setMessagingStyle(p0, avatar)
+                .setAutoCancel(true)
+                .setContentIntent(pendingIntent)
+                .build()
+
+        saveDialogueInDateBase(p0)
+
+        nManager.notify(id, n)
     }
     
     @RequiresApi(O)
