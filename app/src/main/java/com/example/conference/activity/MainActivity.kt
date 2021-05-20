@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.example.conference.R
 import com.example.conference.adapter.ViewPagerAdapter
+import com.example.conference.db.ConferenceRoomDatabase
+import com.example.conference.db.entity.ConferenceEntity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.Dispatchers.IO
@@ -26,7 +28,18 @@ class MainActivity : AppCompatActivity() {
         mainTL.getTabAt(2)?.setIcon(R.drawable.outline_manage_accounts_black_48)
 
         CoroutineScope(IO).launch {
-            ConferenceRoomDatabase().
+            ConferenceRoomDatabase
+                .getDatabase(this@MainActivity)
+                .conferenceDao()
+                .insert(
+                    ConferenceEntity(
+                        id=1,
+                        name="test",
+                        count=3,
+                        last_message = "lastm",
+                        last_message_time = 0
+                    )
+                )
         }
     }
 }
