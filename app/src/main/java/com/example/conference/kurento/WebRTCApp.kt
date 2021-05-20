@@ -10,7 +10,8 @@ import org.webrtc.*
 
 class WebRTCApp(
     context: Context,
-    private val kurentoRoomAPI: KurentoRoomAPI) : NBMWebRTCPeer.Observer{
+    private val kurentoRoomAPI: KurentoRoomAPI
+    ) : NBMWebRTCPeer.Observer{
 
     private val nbmWebRTCPeer: NBMWebRTCPeer = NBMWebRTCPeer(
         NBMMediaConfiguration(),
@@ -22,7 +23,6 @@ class WebRTCApp(
 
     init {
         nbmWebRTCPeer.initialize()
-        nbmWebRTCPeer.addIceServer(ConferenceAPIProvider.BASE_URL)
     }
 
     override fun onInitialize() {

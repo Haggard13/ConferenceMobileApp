@@ -35,7 +35,7 @@ import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
-
+import kotlinx.coroutines.Dispatchers
 
 class ProfileFragment : Fragment() {
 
@@ -168,7 +168,7 @@ class ProfileFragment : Fragment() {
         auth.signOut()
         activity?.getSharedPreferences("user_info", MODE_PRIVATE)?.edit()?.clear()?.apply()
         vm.viewModelScope.launch {
-            vm.databaseClear()
+            withContext(Dispatchers.IO) { vm.databaseClear() }
             startActivity(Intent(activity, LoginActivity::class.java))
             activity?.finish()
         }
