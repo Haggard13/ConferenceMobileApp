@@ -80,7 +80,7 @@ class DialoguesFragment : Fragment() {
             setColorSchemeResources(R.color.colorAccent)
             setOnRefreshListener {
                 CoroutineScope(Main).launch {
-                    updateDialogues()
+                    //updateDialogues()
                     isRefreshing = false
                 }
             }
@@ -91,7 +91,7 @@ class DialoguesFragment : Fragment() {
         super.onResume()
         CoroutineScope(Main).launch {
             binding?.dialoguesPB?.isVisible = true
-            updateDialogues()
+            //updateDialogues()
             binding?.dialoguesPB?.isVisible = false
         }
     }
@@ -137,8 +137,8 @@ class DialoguesFragment : Fragment() {
     private inner class NewMessageBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             CoroutineScope(Main).launch {
-                if (lifecycle.currentState == Lifecycle.State.RESUMED)
-                    updateDialogues()
+                if (lifecycle.currentState == Lifecycle.State.RESUMED) {}
+                    //updateDialogues()
             }
         }
     }

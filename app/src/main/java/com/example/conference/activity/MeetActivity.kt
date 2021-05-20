@@ -29,7 +29,6 @@ class MeetActivity: AppCompatActivity() {
         conferenceID = intent.extras?.getInt("conferenceID")!!
 
         broadcastSVR.init(EglBase.create().eglBaseContext, null)
-        broadcastSVR.keepScreenOn = true
         val roomListener = RoomListenerImpl(conferenceID, "email", this)
         val webRTCApp = WebRTCApp(this, roomListener.kurentoRoomAPI)
     }

@@ -5,7 +5,7 @@ import com.example.conference.db.entity.ConferenceNotificationEntity
 
 @Dao
 interface ConferenceNotificationDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(notification: ConferenceNotificationEntity)
 
     @Query("SELECT notification FROM CONFERENCE_NOTIFICATION WHERE conference_id = :id")

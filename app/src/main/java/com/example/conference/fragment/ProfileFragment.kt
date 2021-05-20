@@ -64,9 +64,9 @@ class ProfileFragment : Fragment() {
         binding?.apply {
             exitIb.setOnClickListener(this@ProfileFragment::onExitClick)
 
-            emailTV.text = account.email
-            nameTV.text = account.name
-            surnameTV.text = account.surname
+            //emailTV.text = account.email
+            //nameTV.text = account.name
+            //surnameTV.text = account.surname
 
             addContactIB.setOnClickListener(this@ProfileFragment::onAddContactClick)
 

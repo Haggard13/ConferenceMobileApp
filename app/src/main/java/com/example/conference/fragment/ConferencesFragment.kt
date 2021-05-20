@@ -29,6 +29,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.Dispatchers.Main
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 
 class ConferencesFragment : Fragment() {
 
@@ -82,7 +83,7 @@ class ConferencesFragment : Fragment() {
             setColorSchemeResources(R.color.colorAccent)
             setOnRefreshListener {
                 CoroutineScope(Main).launch {
-                    updateConferences()
+                    //updateConferences()
                     isRefreshing = false
                 }
             }
@@ -93,7 +94,7 @@ class ConferencesFragment : Fragment() {
         super.onResume()
         CoroutineScope(Main).launch {
             binding?.conferencesPB?.isVisible = true
-            updateConferences()
+            //updateConferences()
             binding?.conferencesPB?.isVisible = false
         }
     }
@@ -140,8 +141,8 @@ class ConferencesFragment : Fragment() {
     private inner class NewMessageBroadcastReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             CoroutineScope(Main).launch {
-                if (lifecycle.currentState == Lifecycle.State.RESUMED)
-                    updateConferences()
+                if (lifecycle.currentState == Lifecycle.State.RESUMED) {}
+                    //updateConferences()
             }
         }
     }

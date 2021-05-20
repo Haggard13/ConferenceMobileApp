@@ -6,6 +6,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.conference.R
 import com.example.conference.adapter.ViewPagerAdapter
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers.IO
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,5 +24,9 @@ class MainActivity : AppCompatActivity() {
         mainTL.getTabAt(0)?.setIcon(R.drawable.outline_groups_black_48)
         mainTL.getTabAt(1)?.setIcon(R.drawable.outline_people_black_48)
         mainTL.getTabAt(2)?.setIcon(R.drawable.outline_manage_accounts_black_48)
+
+        CoroutineScope(IO).launch {
+            ConferenceRoomDatabase().
+        }
     }
 }

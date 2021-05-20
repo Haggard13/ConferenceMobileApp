@@ -1,6 +1,7 @@
 package com.example.conference.kurento
 
 import android.content.Context
+import com.example.conference.server.api.ConferenceAPIProvider
 import fi.vtt.nubomedia.kurentoroomclientandroid.KurentoRoomAPI
 import fi.vtt.nubomedia.webrtcpeerandroid.NBMMediaConfiguration
 import fi.vtt.nubomedia.webrtcpeerandroid.NBMPeerConnection
@@ -15,11 +16,13 @@ class WebRTCApp(
         NBMMediaConfiguration(),
         context,
         {  },
-        this)
+        this
+    )
     private var iceSent = false
 
     init {
         nbmWebRTCPeer.initialize()
+        nbmWebRTCPeer.addIceServer(ConferenceAPIProvider.BASE_URL)
     }
 
     override fun onInitialize() {

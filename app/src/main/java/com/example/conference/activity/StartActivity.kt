@@ -31,27 +31,13 @@ class StartActivity : AppCompatActivity() {
             FirebaseMessaging.getInstance().run {
                 subscribeToTopic("u${account.id}")
             }
-            /*FirebaseMessaging.getInstance().token.addOnCompleteListener {
-                if (it.isSuccessful) {
-                    CoroutineScope(IO).launch {
-                        try {
-                            ConferenceAPIProvider.conferenceAPI
-                                .sendFirebaseMessagingToken(
-                                    "${Account(this@StartActivity.applicationContext).userID} ${it.result}"
-                                ).execute()
-                        } catch (e: Exception) {
-                            //throw e
-                        }
-                    }
-                }
-            }*/
 
             val currentUser: FirebaseUser? = auth.currentUser
             if (currentUser != null) {
                 startActivityIntent(MainActivity::class.java)
                 this@StartActivity.finish()
             } else {
-                startActivityIntent(LoginActivity::class.java)
+                startActivityIntent(MainActivity::class.java) //fixme
                 this@StartActivity.finish()
             }
         }
