@@ -181,7 +181,7 @@ class ConferenceActivity : AppCompatActivity() {
     fun onStartConferenceClick(v: View) {
         val intent = Intent(this, MeetActivity::class.java)
         intent.putExtra("conferenceID", viewModel.conferenceID)
-        startActivity(intent)
+        startActivity(intent) //fixme
     }
 
     fun onBackClick(v: View) = finish()

@@ -4,6 +4,7 @@ import com.example.conference.db.entity.ConferenceEntity
 import com.example.conference.json.ContactEntityWithStatus
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import org.webrtc.SessionDescription
 import retrofit2.Call
 import retrofit2.http.*
 
@@ -47,4 +48,7 @@ interface ConferenceAPI {
         @Path("id") id: Int,
         @Path("name") name: String
     ): Call<Boolean>
+
+    @POST("/offer")
+    fun offer(@Body a: String): Call<Boolean>
 }

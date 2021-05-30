@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.database.sqlite.SQLiteConstraintException
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -42,7 +43,7 @@ class ConferencesFragment : Fragment() {
 
         viewModel = ViewModelProvider(this).get(ConferencesViewModel::class.java)
 
-        activity!!.registerReceiver(
+        requireActivity().registerReceiver(
             NewMessageBroadcastReceiver(),
             IntentFilter("NEW_CONFERENCE_MESSAGE")
         )
@@ -112,7 +113,7 @@ class ConferencesFragment : Fragment() {
             val conferences: List<ConferenceEntity> =
                 withContext(IO) {
                     conferenceProvider
-                        .getAllConferences(activity!!.applicationContext)
+                        .getAllConferences(requireActivity().applicationContext)
                         .sortedByDescending { it.last_message_time }
                 }
 
@@ -127,7 +128,9 @@ class ConferencesFragment : Fragment() {
             withContext(IO) {
                 conferences.forEach {
                     viewModel.addConference(it)
-                    viewModel.addConferenceNotification(it.id)
+                    try {
+                        viewModel.addConferenceNotification(it.id)
+                    } catch (e: SQLiteConstraintException) {}
                 }
             }
         } catch (e: ConferencesGettingException) {

@@ -21,7 +21,7 @@ import java.util.*
 
 
 object Server {
-    const val baseURL = "http://192.168.0.109:8082"
+    const val baseURL = "http://192.168.0.137:8082"
 
     fun get(url: String): Response {
         val client = OkHttpClient.Builder().connectionSpecs(
