@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:onClick="onRemoteViewClick"
     tools:background="@color/colorBackground"
     tools:context=".activity.MeetActivity">
 
@@ -25,6 +26,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:onClick="onRemoteViewClick"
+        android:visibility="visible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,54 +37,59 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/meet_tool_bar"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:background="@color/colorPrimary"
+        android:layout_height="60dp"
+        android:background="#33000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:elevation="40dp">
+        tools:elevation="20dp">
 
         <ImageButton
-            android:id="@+id/imageButton2"
+            android:id="@+id/membersIB"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:background="@color/colorPrimary"
-            android:onClick="onBackClick"
+            android:background="@drawable/meet_button_white_style"
+            android:onClick="onMembersClick"
+            android:scaleType="center"
+            android:src="@drawable/outline_people_24"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/outline_arrow_back_24" />
-
-        <ImageButton
-            android:id="@+id/hangupCallIB"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="5dp"
-            android:background="@drawable/button_background"
-            android:elevation="10dp"
-            android:onClick="onHangupCallClick"
-            android:scaleType="fitCenter"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/outline_phone_disabled_white_36" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <ImageButton
-            android:id="@+id/imageButton"
+            android:id="@+id/roomIB"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:layout_marginEnd="5dp"
-            android:background="@color/colorPrimary"
-            android:onClick="onSwitchVideoClick"
-            app:layout_constraintEnd_toStartOf="@+id/hangupCallIB"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/outline_switch_video_24" />
+            android:background="@drawable/meet_button_white_style"
+            android:onClick="onRoomClick"
+            android:scaleType="center"
+            android:src="@drawable/outline_meeting_room_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/membersIB"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageButton
+            android:id="@+id/chatIB"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/meet_button_white_style"
+            android:onClick="onChatClick"
+            android:scaleType="center"
+            android:src="@drawable/outline_chat_24"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/membersIB"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/localViewRenderer"
-        android:layout_width="120dp"
-        android:layout_height="168dp"
+        android:layout_width="125dp"
+        android:layout_height="175dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -91,79 +98,97 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
-        android:layout_height="40dp"
-        android:background="@color/colorPrimary"
+        android:layout_height="80dp"
+        android:background="#33000000"
         android:elevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:weightSum="6">
+            android:orientation="horizontal">
 
             <ImageButton
-                android:id="@+id/membersIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:id="@+id/reverseCamIB"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginEnd="20dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_bottom_navigation_view_background"
-                android:onClick="onMembersClick"
-                android:scaleType="center"
-                android:src="@drawable/outline_people_24" />
-
-            <ImageButton
-                android:id="@+id/roomIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/button_bottom_navigation_view_background"
-                android:onClick="onRoomClick"
-                android:scaleType="center"
-                android:src="@drawable/outline_meeting_room_24" />
-
-            <ImageButton
-                android:id="@+id/chatIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/button_bottom_navigation_view_background"
-                android:onClick="onChatClick"
-                android:scaleType="center"
-                android:src="@drawable/outline_chat_24" />
+                android:background="@drawable/meet_button_white_style"
+                android:onClick="onSwitchVideoClick"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/videoBroadcastIB"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/outline_switch_video_24" />
 
             <ImageButton
                 android:id="@+id/shareScreenIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
+                android:layout_width="1dp"
+                android:layout_height="1dp"
                 android:background="@drawable/button_bottom_navigation_view_background"
+                android:onClick="onScreenShareClick"
                 android:scaleType="center"
-                android:src="@drawable/outline_mobile_screen_share_24" />
+                android:src="@drawable/outline_mobile_screen_share_24"
+                android:visibility="invisible" />
 
             <ImageButton
                 android:id="@+id/videoBroadcastIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginEnd="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_bottom_navigation_view_background"
+                android:background="@drawable/meet_button_white_style"
                 android:onClick="onStopBroadcast"
-                android:scaleType="center"
-                android:src="@drawable/outline_videocam_24" />
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/outline_videocam_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/space"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <Space
+                android:id="@+id/space"
+                android:layout_width="1dp"
+                android:layout_height="80dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
 
             <ImageButton
                 android:id="@+id/microIB"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="10dp"
                 android:layout_weight="1"
-                android:background="@drawable/button_bottom_navigation_view_background"
+                android:background="@drawable/meet_button_white_style"
                 android:onClick="onMuteMicClick"
-                android:scaleType="center"
-                android:src="@drawable/outline_mic_24" />
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/outline_mic_24"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/space"
+                app:layout_constraintTop_toTopOf="parent" />
 
-        </LinearLayout>
+            <ImageButton
+                android:id="@+id/hangupCallIB"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="20dp"
+                android:layout_weight="1"
+                android:background="@drawable/meet_button_style"
+                android:onClick="onHangupCallClick"
+                android:padding="5dp"
+                android:scaleType="fitCenter"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/microIB"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/outline_phone_disabled_white_36" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </com.google.android.material.bottomnavigation.BottomNavigationView>
 
@@ -176,7 +201,7 @@
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/meet_tool_bar" />
 
     <fragment
         android:id="@+id/chatFragment"
@@ -187,17 +212,17 @@
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/meet_tool_bar" />
 
     <fragment
         android:id="@+id/roomFragment"
         android:name="com.example.conference.fragment.MeetRoomFragment"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:elevation="20dp"
+        android:elevation="30dp"
         app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/meet_tool_bar" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

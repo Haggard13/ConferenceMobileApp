@@ -1,9 +1,12 @@
 package com.example.conference.activity
 
+import android.content.Intent
 import android.media.AudioManager
+import android.media.projection.MediaProjection
+import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.util.DisplayMetrics
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
@@ -34,29 +37,19 @@ import com.example.conference.server.websocket.dto.IceCandidate as IceCandt
 
 
 class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
-    private val tag = "MeetActivity"
 
     private var conferenceID: Int = 0
-
     private lateinit var peerConnectionFactory: PeerConnectionFactory
-    private lateinit var sdpConstraints: MediaConstraints
     private val peers = HashMap<Int, PeerConnection>()
-
-    private lateinit var videoSource: VideoSource
     private lateinit var localVideoTrack: VideoTrack
-
-    private lateinit var audioConstraints: MediaConstraints
-    private lateinit var audioSource: AudioSource
     private lateinit var localAudioTrack: AudioTrack
+    private lateinit var localScreenTrack: VideoTrack
+    private lateinit var localStream: MediaStream
+    private var localScreenStream: MediaStream? = null
     private lateinit var rootEglBase: EglBase
-
     private var videoCapturerAndroid: CameraVideoCapturer? = null
-
-    private var peerIceServers: MutableList<PeerConnection.IceServer> = ArrayList()
-
+    private var screenCapturerAndroid: ScreenCapturerAndroid? = null
     private lateinit var socket: WebSocketHandler
-
-    private var isBroadcastRun = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,7 +62,6 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         conferenceID = intent.extras?.getInt("conferenceID")!!
 
         initVideos()
-        initSdpConstraint()
         start()
     }
 
@@ -79,7 +71,33 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         onHangupCallClick(Button(this))
     }
 
-    //region Init
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != 0 || resultCode != RESULT_OK)
+            return
+
+        screenCapturerAndroid = ScreenCapturerAndroid(data, object :
+            MediaProjection.Callback() {
+            override fun onStop() {
+                localScreenTrack.setEnabled(false)
+            }
+        })
+
+        val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", rootEglBase.eglBaseContext)
+        val screenSource = peerConnectionFactory.createVideoSource(screenCapturerAndroid!!.isScreencast)
+        screenCapturerAndroid!!.initialize(surfaceTextureHelper, this, screenSource.capturerObserver)
+
+        localScreenTrack = peerConnectionFactory.createVideoTrack("103", screenSource)
+
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(metrics)
+
+        screenCapturerAndroid?.startCapture(1024, 720, 30)
+
+        localScreenStream = peerConnectionFactory.createLocalMediaStream("104")
+        localScreenStream!!.addTrack(localScreenTrack)
+    }
+
     private fun initVideos() {
         rootEglBase = EglBase.create()
 
@@ -90,60 +108,24 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         remoteViewRenderer.setZOrderMediaOverlay(true)
     }
 
-    private fun initSdpConstraint() {
-        sdpConstraints = MediaConstraints()
-        sdpConstraints.mandatory.apply {
-            add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"))
-            add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"))
-        }
-    }
-    //endregion
-
     private fun start() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-
-        peerIceServers.apply {
-            add(PeerConnection.IceServer("stun:stun01.sipphone.com"))
-            add(PeerConnection.IceServer("stun:stun.ekiga.net"))
-            add(PeerConnection.IceServer("stun:stun.fwdnet.net"))
-            add(PeerConnection.IceServer("stun:stun.ideasip.com"))
-            add(PeerConnection.IceServer("stun:stun.iptel.org"))
-            add(PeerConnection.IceServer("stun:stun.rixtelecom.se"))
-            add(PeerConnection.IceServer("stun:stun.schlund.de"))
-            add(PeerConnection.IceServer("stun:stun.l.google.com:19302"))
-            add(PeerConnection.IceServer("stun:stun1.l.google.com:19302"))
-            add(PeerConnection.IceServer("stun:stun2.l.google.com:19302"))
-            add(PeerConnection.IceServer("stun:stun3.l.google.com:19302"))
-            add(PeerConnection.IceServer("stun:stun4.l.google.com:19302"))
-            add(PeerConnection.IceServer("turn:numb.viagenie.ca", "webrtc@live.com", "muazkh"))
-            add(PeerConnection.IceServer("turn:192.158.29.39:3478?transport=udp", "28224511:1379330808", "JZEOEt2V3Qb0y27GRntt2u2PAYA="))
-            add(PeerConnection.IceServer("turn:192.158.29.39:3478?transport=tcp", "28224511:1379330808", "JZEOEt2V3Qb0y27GRntt2u2PAYA="))
-        }
 
         val initializationOptions = InitializationOptions.builder(this)
             .createInitializationOptions()
         PeerConnectionFactory.initialize(initializationOptions)
 
-        //Create a new PeerConnectionFactory instance - using Hardware encoder and decoder.
-
-        //Create a new PeerConnectionFactory instance - using Hardware encoder and decoder.
         val options = PeerConnectionFactory.Options()
-        val defaultVideoEncoderFactory = DefaultVideoEncoderFactory(
-            rootEglBase.eglBaseContext,  /* enableIntelVp8Encoder */
-            true,  /* enableH264HighProfile */
-            true
-        )
-        val defaultVideoDecoderFactory = DefaultVideoDecoderFactory(rootEglBase.eglBaseContext)
+        val encoderFactory = DefaultVideoEncoderFactory(rootEglBase.eglBaseContext, true, true)
+        val decoderFactory = DefaultVideoDecoderFactory(rootEglBase.eglBaseContext)
+
         peerConnectionFactory = PeerConnectionFactory.builder()
             .setOptions(options)
-            .setVideoEncoderFactory(defaultVideoEncoderFactory)
-            .setVideoDecoderFactory(defaultVideoDecoderFactory)
+            .setVideoEncoderFactory(encoderFactory)
+            .setVideoDecoderFactory(decoderFactory)
             .createPeerConnectionFactory()
 
         videoCapturerAndroid = createCameraCapturer()
-        Log.e(tag, "video capturer created")
-        audioConstraints = MediaConstraints()
-
         startCapturing()
 
         socket = WebSocketHandler(this@MeetActivity) {
@@ -153,35 +135,52 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
 
     private fun startCapturing() {
         val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", rootEglBase.eglBaseContext)
-        videoSource = peerConnectionFactory.createVideoSource(videoCapturerAndroid!!.isScreencast)
+        val videoSource = peerConnectionFactory.createVideoSource(videoCapturerAndroid!!.isScreencast)
         videoCapturerAndroid!!.initialize(surfaceTextureHelper, this, videoSource.capturerObserver)
 
         localVideoTrack = peerConnectionFactory.createVideoTrack("100", videoSource)
 
-        audioSource = peerConnectionFactory.createAudioSource(audioConstraints)
+        val audioSource = peerConnectionFactory.createAudioSource(MediaConstraints())
         localAudioTrack = peerConnectionFactory.createAudioTrack("101", audioSource)
 
-        videoCapturerAndroid?.startCapture(1024, 720, 30)
+        videoCapturerAndroid?.startCapture(640, 480, 24)
 
         localViewRenderer.setMirror(true)
 
-        localVideoTrack .addSink(localViewRenderer)
+        runOnUiThread { localVideoTrack.addSink(localViewRenderer) }
+        peers.forEach {
+            it.value.addStream(localScreenStream)
+        }
     }
 
     private fun createPeerPool() =
         socket.join(JoiningMessage("join", conferenceID, Account(applicationContext).id))
 
-    private fun addStreamToLocalPeer(peerConnection: PeerConnection) {
-        val localStream = peerConnectionFactory.createLocalMediaStream("102")
-        localStream?.addTrack(localVideoTrack)
-        localStream?.addTrack(localAudioTrack)
+    private fun createPeer(id: Int) = peerConnectionFactory.createPeerConnection(
+        getIceServers(),
+        object : PeerConnectionObserver() {
+            override fun onIceCandidate(p0: IceCandidate?) {
+                socket.sendIceCandidate(
+                    IceCandt(
+                        id = "sendIceCandidate",
+                        conferenceID,
+                        userId = id,
+                        senderId = Account(applicationContext).id,
+                        iceCandidate = Gson().toJson(p0)
+                    )
+                )
+            }
 
-        peerConnection.addStream(localStream)
-    }
+            @RequiresApi(Build.VERSION_CODES.M)
+            override fun onAddStream(p0: MediaStream?) =
+                onGotRemoteStream(p0!!)
 
-    private fun createScreenCapture(): ScreenCapturerAndroid? {
-        return null
-    }
+
+            override fun onRemoveStream(p0: MediaStream?) {
+                remoteViewRenderer.clearImage()
+            }
+        }
+    )
 
     private fun createCameraCapturer(): CameraVideoCapturer? {
         val enumerator = Camera2Enumerator(this)
@@ -194,6 +193,15 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         return null
     }
 
+    private fun addStreamToLocalPeer(peerConnection: PeerConnection) {
+        localStream = peerConnectionFactory.createLocalMediaStream("102")
+        //localAudioTrack.setVolume(100.0)
+        localStream.addTrack(localVideoTrack)
+        localStream.addTrack(localAudioTrack)
+
+        peerConnection.addStream(localStream)
+    }
+
     @RequiresApi(Build.VERSION_CODES.M)
     private fun onGotRemoteStream(stream: MediaStream) {
         val videoTrack = stream.videoTracks[0]
@@ -204,6 +212,8 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
                     ringerMode = AudioManager.RINGER_MODE_VIBRATE
                 }
 
+                getSystemService(AudioManager::class.java).isSpeakerphoneOn = true
+
                 videoTrack.addSink(remoteViewRenderer)
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -211,42 +221,27 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         }
     }
 
-    private fun createPeer(id: Int) = peerConnectionFactory.createPeerConnection(
-            peerIceServers,
-            object : PeerConnectionObserver() {
-                override fun onIceCandidate(p0: IceCandidate?) {
-                    socket.sendIceCandidate(
-                        IceCandt(
-                            id = "sendIceCandidate",
-                            conferenceID,
-                            userId = id,
-                            senderId = Account(applicationContext).id,
-                            iceCandidate = Gson().toJson(p0)
-                        )
-                    )
-                }
-
-                @RequiresApi(Build.VERSION_CODES.M)
-                override fun onAddStream(p0: MediaStream?) = onGotRemoteStream(p0!!)
-
-                override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {
-                    if (p0?.track()?.id() == "103") {
-                        (p0.track() as VideoTrack).addSink(remoteViewRendererScreen)
-                    }
-                }
-
-                override fun onTrack(transceiver: RtpTransceiver?) {
-                    if (transceiver!!.receiver!!.track()!!
-                            .id() == "103" && !transceiver.receiver!!.track()!!
-                            .enabled()
-                    )
-                        (transceiver.receiver.track() as VideoTrack).removeSink(
-                            remoteViewRendererScreen
-                        )
-
-                }
-            }
-        )
+    private fun getIceServers(): MutableList<PeerConnection.IceServer> {
+        val iceServers: MutableList<PeerConnection.IceServer> = ArrayList()
+        iceServers.apply {
+            add(PeerConnection.IceServer.builder("stun:stun01.sipphone.com").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.ekiga.net").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.fwdnet.net").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.ideasip.com").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.iptel.org").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.rixtelecom.se").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.schlund.de").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer())
+            add(PeerConnection.IceServer.builder("stun:stun4.l.google.com:19302").createIceServer())
+            add(PeerConnection.IceServer.builder("turn:numb.viagenie.ca").setUsername("webrtc@live.com").setPassword("muazkh").createIceServer())
+            add(PeerConnection.IceServer.builder("turn:192.158.29.39:3478?transport=udp").setUsername("28224511:1379330808").setPassword("JZEOEt2V3Qb0y27GRntt2u2PAYA=").createIceServer())
+            add(PeerConnection.IceServer.builder("turn:192.158.29.39:3478?transport=tcp").setUsername("28224511:1379330808").setPassword("JZEOEt2V3Qb0y27GRntt2u2PAYA=").createIceServer())
+        }
+        return iceServers
+    }
 
     //region ClickListeners
     @RequiresApi(Build.VERSION_CODES.M)
@@ -259,6 +254,21 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
             ringerMode = AudioManager.RINGER_MODE_NORMAL
         }
         finish()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun onScreenShareClick(v: View) {
+        if (localScreenStream != null) {
+            localScreenStream!!.dispose()
+            peers.forEach {
+                it.value.removeStream(localScreenStream)
+            }
+            localScreenStream = null
+            return
+        }
+
+        val mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
+        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 0)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
@@ -367,7 +377,6 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
     override fun onJoin(members: Members) {
         members.members.forEach {
             val peerConnection: PeerConnection = createPeer(it)!!
-            peerConnection.setAudioPlayout(true)
             peers[it] = peerConnection
 
             addStreamToLocalPeer(peerConnection)

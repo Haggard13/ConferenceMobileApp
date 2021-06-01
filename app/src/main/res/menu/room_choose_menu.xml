@@ -4,10 +4,12 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/chatItem"
-        android:icon="@drawable/chat_meet"
-        android:title="Чат комнаты" />
+        android:icon="@drawable/outline_chat_24"
+        android:title="Чат комнаты"
+        app:showAsAction="always" />
     <item
         android:id="@+id/microItem"
-        android:icon="@drawable/micro_meet"
-        android:title="Микрофон" />
+        android:icon="@drawable/outline_mic_24"
+        android:title="Микрофон"
+        app:showAsAction="always" />
 </menu>
