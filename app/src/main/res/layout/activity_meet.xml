@@ -8,29 +8,31 @@
     tools:background="@color/colorBackground"
     tools:context=".activity.MeetActivity">
 
-    <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/remoteViewRendererScreen"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:onClick="onRemoteViewClick"
-        android:visibility="invisible"
+    <HorizontalScrollView
+        android:id="@+id/usersVideoSV"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-    </org.webrtc.SurfaceViewRenderer>
+        <LinearLayout
+            android:id="@+id/usersVideoLL"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
     <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/remoteViewRenderer"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:onClick="onRemoteViewClick"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:id="@+id/localViewRenderer"
+        android:layout_width="125dp"
+        android:layout_height="175dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent">
 
     </org.webrtc.SurfaceViewRenderer>
 
@@ -84,23 +86,11 @@
             app:layout_constraintTop_toTopOf="parent" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/localViewRenderer"
-        android:layout_width="125dp"
-        android:layout_height="175dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
-        app:layout_constraintEnd_toEndOf="parent">
-
-    </org.webrtc.SurfaceViewRenderer>
-
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="0dp"
         android:layout_height="80dp"
         android:background="#33000000"
-        android:elevation="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
@@ -124,16 +114,6 @@
                 app:layout_constraintEnd_toStartOf="@+id/videoBroadcastIB"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/outline_switch_video_24" />
-
-            <ImageButton
-                android:id="@+id/shareScreenIB"
-                android:layout_width="1dp"
-                android:layout_height="1dp"
-                android:background="@drawable/button_bottom_navigation_view_background"
-                android:onClick="onScreenShareClick"
-                android:scaleType="center"
-                android:src="@drawable/outline_mobile_screen_share_24"
-                android:visibility="invisible" />
 
             <ImageButton
                 android:id="@+id/videoBroadcastIB"

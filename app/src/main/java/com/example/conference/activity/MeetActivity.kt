@@ -1,15 +1,13 @@
 package com.example.conference.activity
 
-import android.content.Intent
 import android.media.AudioManager
-import android.media.projection.MediaProjection
-import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.util.DisplayMetrics
 import android.view.View
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
+import android.view.ViewGroup.LayoutParams
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -28,6 +26,7 @@ import com.example.conference.server.websocket.WebSocketHandler
 import com.example.conference.server.websocket.dto.*
 import com.google.gson.Gson
 import kotlinx.android.synthetic.main.activity_meet.*
+import kotlinx.coroutines.*
 import org.webrtc.*
 import org.webrtc.PeerConnectionFactory.InitializationOptions
 import java.util.*
@@ -41,14 +40,12 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
     private var conferenceID: Int = 0
     private lateinit var peerConnectionFactory: PeerConnectionFactory
     private val peers = HashMap<Int, PeerConnection>()
+    private val views = HashMap<Int, SurfaceViewRenderer>()
     private lateinit var localVideoTrack: VideoTrack
     private lateinit var localAudioTrack: AudioTrack
-    private lateinit var localScreenTrack: VideoTrack
     private lateinit var localStream: MediaStream
-    private var localScreenStream: MediaStream? = null
     private lateinit var rootEglBase: EglBase
     private var videoCapturerAndroid: CameraVideoCapturer? = null
-    private var screenCapturerAndroid: ScreenCapturerAndroid? = null
     private lateinit var socket: WebSocketHandler
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,41 +68,11 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         onHangupCallClick(Button(this))
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != 0 || resultCode != RESULT_OK)
-            return
-
-        screenCapturerAndroid = ScreenCapturerAndroid(data, object :
-            MediaProjection.Callback() {
-            override fun onStop() {
-                localScreenTrack.setEnabled(false)
-            }
-        })
-
-        val surfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", rootEglBase.eglBaseContext)
-        val screenSource = peerConnectionFactory.createVideoSource(screenCapturerAndroid!!.isScreencast)
-        screenCapturerAndroid!!.initialize(surfaceTextureHelper, this, screenSource.capturerObserver)
-
-        localScreenTrack = peerConnectionFactory.createVideoTrack("103", screenSource)
-
-        val metrics = DisplayMetrics()
-        windowManager.defaultDisplay.getMetrics(metrics)
-
-        screenCapturerAndroid?.startCapture(1024, 720, 30)
-
-        localScreenStream = peerConnectionFactory.createLocalMediaStream("104")
-        localScreenStream!!.addTrack(localScreenTrack)
-    }
 
     private fun initVideos() {
         rootEglBase = EglBase.create()
-
         localViewRenderer.init(rootEglBase.eglBaseContext, null)
-        remoteViewRenderer.init(rootEglBase.eglBaseContext, null)
-
         localViewRenderer.setZOrderMediaOverlay(true)
-        remoteViewRenderer.setZOrderMediaOverlay(true)
     }
 
     private fun start() {
@@ -148,9 +115,6 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
         localViewRenderer.setMirror(true)
 
         runOnUiThread { localVideoTrack.addSink(localViewRenderer) }
-        peers.forEach {
-            it.value.addStream(localScreenStream)
-        }
     }
 
     private fun createPeerPool() =
@@ -173,11 +137,12 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
 
             @RequiresApi(Build.VERSION_CODES.M)
             override fun onAddStream(p0: MediaStream?) =
-                onGotRemoteStream(p0!!)
+                onGotRemoteStream(p0!!, id)
 
 
             override fun onRemoveStream(p0: MediaStream?) {
-                remoteViewRenderer.clearImage()
+                runOnUiThread { usersVideoLL.removeViewInLayout(views[id]) }
+                views.remove(id)
             }
         }
     )
@@ -195,7 +160,7 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
 
     private fun addStreamToLocalPeer(peerConnection: PeerConnection) {
         localStream = peerConnectionFactory.createLocalMediaStream("102")
-        //localAudioTrack.setVolume(100.0)
+        localAudioTrack.setVolume(100.0)
         localStream.addTrack(localVideoTrack)
         localStream.addTrack(localAudioTrack)
 
@@ -203,18 +168,44 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun onGotRemoteStream(stream: MediaStream) {
+    private fun onGotRemoteStream(stream: MediaStream, id: Int) {
         val videoTrack = stream.videoTracks[0]
         runOnUiThread {
             try {
+                val display = windowManager.defaultDisplay
+                val metricsB = DisplayMetrics()
+                display.getMetrics(metricsB)
+
                 getSystemService(AudioManager::class.java) .apply {
                     mode = AudioManager.MODE_IN_COMMUNICATION
                     ringerMode = AudioManager.RINGER_MODE_VIBRATE
                 }
 
+                val remoteView = SurfaceViewRenderer(this)
+
+                remoteView.apply {
+                    init(rootEglBase.eglBaseContext, null)
+                    setZOrderMediaOverlay(true)
+                    layoutParams =
+                        LayoutParams(metricsB.widthPixels, metricsB.heightPixels)
+                    setOnClickListener(this@MeetActivity::onRemoteViewClick)
+                }
+
+                views[id] = remoteView
+
+                usersVideoLL.addView(remoteView)
+
                 getSystemService(AudioManager::class.java).isSpeakerphoneOn = true
 
-                videoTrack.addSink(remoteViewRenderer)
+                videoTrack.addSink(remoteView)
+
+
+                CoroutineScope(Dispatchers.IO).launch {
+                    withContext(Dispatchers.Main) { onStopBroadcast(videoBroadcastIB) }
+                    delay(700)
+                    withContext(Dispatchers.Main) { onStopBroadcast(videoBroadcastIB) }
+                }
+
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -246,7 +237,10 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
     //region ClickListeners
     @RequiresApi(Build.VERSION_CODES.M)
     fun onHangupCallClick(v: View) {
-        peers.forEach { it.value.close() }
+        peers.forEach {
+            it.value.removeStream(localStream)
+            it.value.close()
+        }
         socket.close()
         videoCapturerAndroid?.dispose()
         getSystemService(AudioManager::class.java) .apply {
@@ -254,21 +248,6 @@ class MeetActivity: AppCompatActivity(), WebSocketHandler.SocketListener {
             ringerMode = AudioManager.RINGER_MODE_NORMAL
         }
         finish()
-    }
-
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun onScreenShareClick(v: View) {
-        if (localScreenStream != null) {
-            localScreenStream!!.dispose()
-            peers.forEach {
-                it.value.removeStream(localScreenStream)
-            }
-            localScreenStream = null
-            return
-        }
-
-        val mediaProjectionManager = getSystemService(MediaProjectionManager::class.java)
-        startActivityForResult(mediaProjectionManager.createScreenCaptureIntent(), 0)
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
